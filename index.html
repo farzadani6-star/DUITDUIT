@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KeuanganKu</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="container">
+  <h1>💰 KeuanganKu</h1>
+
+  <!-- ================= FORM ================= -->
+  <form id="form">
+    <input type="text" id="ket" placeholder="Keterangan" required>
+
+    <input type="text" id="jumlah" placeholder="Jumlah (Rp)" required>
+
+   
+    <select id="tipe">
+  <option value="masuk">Pemasukan</option>
+  <option value="keluar">Pengeluaran</option>
+</select>
+
+<select id="owner">
+  <option value="">Pilih Pemilik</option>
+  <option value="sulala">SULALA</option>
+  <option value="surere">SURERE</option>
+</select>
+
+    <!-- KATEGORI -->
+    <select id="kategori" style="display:none;">
+      <option value="">Pilih Kategori</option>
+      <option>Makanan</option>
+      <option>Jajan</option>
+      <option>Kebutuhan Rumah</option>
+      <option>Laundry</option>
+      <option>Foya-foya</option>
+      <option>Belanja</option>
+      <option>Transportasi</option>
+      <option>Perbaikan</option>
+      <option>Telekomunikasi</option>
+      <option>Kos</option>
+      <option>Utang</option>
+    </select>
+
+    <button type="submit">Tambah</button>
+  </form>
+
+  <!-- ================= SUMMARY ================= -->
+  <div class="summary">
+    <p>Pemasukan: <span id="totalMasuk">Rp 0</span></p>
+    <p>Pengeluaran: <span id="totalKeluar">Rp 0</span></p>
+    <p>Saldo: <span id="saldo">Rp 0</span></p>
+  </div>
+
+  <!-- ================= TABEL ================= -->
+  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Keterangan</th>
+        <th>Tipe</th>
+        <th>Kategori</th>
+        <th>Jumlah</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  
+<div class="chart-box">
+  <h3>💰 Pemasukan SULALA vs SURERE</h3>
+  <canvas id="ownerChart"></canvas>
+</div>
+  <!-- ================= CHART UTAMA ================= -->
+  <div class="chart-box">
+    <h3>📊 Pemasukan vs Pengeluaran</h3>
+    <canvas id="myChart"></canvas>
+  </div>
+
+  <!-- ================= CHART KATEGORI ================= -->
+  <div class="chart-box">
+    <h3>🥧 Pengeluaran per Kategori</h3>
+    <canvas id="kategoriChart"></canvas>
+  </div>
+
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBeubIUWKxtxShvHiQ9U7EKLDOWQanl3cw",
+  authDomain: "money-8fe40.firebaseapp.com",
+  projectId: "money-8fe40",
+  storageBucket: "money-8fe40.firebasestorage.app",
+  messagingSenderId: "830856276517",
+  appId: "1:830856276517:web:33961825cfe06b8e8b6dcc",
+  measurementId: "G-W65YZSXDMX"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// bikin global biar bisa dipakai di script.js
+window.db = db;
+window.fb = { collection, addDoc, getDocs, deleteDoc, doc, updateDoc };
+</script>
+<script src="script.js"></script>
+
+</body>
+</html>
