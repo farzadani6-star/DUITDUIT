@@ -15,9 +15,10 @@ const saldoEl = document.getElementById("saldo");
 
 const tipeSelect = document.getElementById("tipe");
 const kategoriSelect = document.getElementById("kategori");
-
-// 🔥 TAMBAHAN OWNER
 const ownerSelect = document.getElementById("owner");
+
+const ketInput = document.getElementById("ket");
+const jumlahInput = document.getElementById("jumlah");
 
 // ==========================
 // DATA
@@ -44,15 +45,12 @@ function loadCache() {
 // FORMAT RUPIAH
 // ==========================
 function formatRupiah(angka) {
-  return "Rp " + angka.toLocaleString("id-ID");
+  return "Rp " + Number(angka).toLocaleString("id-ID");
 }
 
 // ==========================
 // INPUT FORMAT
 // ==========================
-const ketInput = document.getElementById("ket");
-const jumlahInput = document.getElementById("jumlah");
-
 jumlahInput.addEventListener("input", (e) => {
   let value = e.target.value.replace(/\D/g, "");
   if (!value) return (e.target.value = "");
@@ -62,9 +60,7 @@ jumlahInput.addEventListener("input", (e) => {
 // ==========================
 // CHART UTAMA
 // ==========================
-const ctx = document.getElementById("myChart").getContext("2d");
-
-let chart = new Chart(ctx, {
+const chart = new Chart(document.getElementById("myChart"), {
   type: "doughnut",
   data: {
     labels: ["Pemasukan", "Pengeluaran"],
@@ -78,9 +74,7 @@ let chart = new Chart(ctx, {
 // ==========================
 // CHART KATEGORI
 // ==========================
-const ctxKategori = document.getElementById("kategoriChart").getContext("2d");
-
-let kategoriChart = new Chart(ctxKategori, {
+const kategoriChart = new Chart(document.getElementById("kategoriChart"), {
   type: "pie",
   data: {
     labels: [],
@@ -92,11 +86,9 @@ let kategoriChart = new Chart(ctxKategori, {
 });
 
 // ==========================
-// 🔥 CHART OWNER BARU
+// CHART OWNER
 // ==========================
-const ctxOwner = document.getElementById("ownerChart").getContext("2d");
-
-let ownerChart = new Chart(ctxOwner, {
+const ownerChart = new Chart(document.getElementById("ownerChart"), {
   type: "bar",
   data: {
     labels: ["SULALA", "SURERE"],
@@ -108,19 +100,16 @@ let ownerChart = new Chart(ctxOwner, {
 });
 
 // ==========================
-// WARNA
+// COLORS
 // ==========================
 function generateColors(count) {
-  const colors = [];
-  for (let i = 0; i < count; i++) {
-    const hue = Math.floor((360 / count) * i);
-    colors.push(`hsl(${hue},70%,55%)`);
-  }
-  return colors;
+  return Array.from({ length: count }, (_, i) =>
+    `hsl(${(360 / count) * i},70%,55%)`
+  );
 }
 
 // ==========================
-// SHOW/HIDE KATEGORI
+// SHOW CATEGORY
 // ==========================
 tipeSelect.addEventListener("change", () => {
   kategoriSelect.style.display =
@@ -128,10 +117,12 @@ tipeSelect.addEventListener("change", () => {
 });
 
 // ==========================
-// FIREBASE
+// FIREBASE LOAD (FIX AMAN)
 // ==========================
 async function loadData() {
   try {
+    console.log("Loading Firestore...");
+
     const snap = await fb.getDocs(fb.collection(db, "transaksi"));
 
     data = [];
@@ -140,24 +131,26 @@ async function loadData() {
       data.push({ id: docSnap.id, ...docSnap.data() });
     });
 
+    console.log("DATA LOADED:", data.length);
+
     saveCache();
     render();
 
   } catch (err) {
     console.error("Firebase gagal load:", err);
-
-    // fallback ke cache
     loadCache();
   }
 }
 
+// ==========================
+// FIREBASE CRUD
+// ==========================
 async function addData(item) {
   await fb.addDoc(fb.collection(db, "transaksi"), item);
 }
 
-async function updateData(index, newData) {
-  const id = data[index].id;
-  await fb.updateDoc(fb.doc(db, "transaksi", id), newData);
+async function updateData(id, item) {
+  await fb.updateDoc(fb.doc(db, "transaksi", id), item);
 }
 
 async function deleteData(index) {
@@ -165,15 +158,12 @@ async function deleteData(index) {
 
   if (confirm("Hapus transaksi?")) {
     await fb.deleteDoc(fb.doc(db, "transaksi", id));
-
-    data.splice(index, 1);
-    saveCache();
-    render();
+    await loadData();
   }
 }
 
 // ==========================
-// GOOGLE SHEET SYNC
+// SHEET SYNC
 // ==========================
 async function kirimKeSheet(item) {
   try {
@@ -183,7 +173,7 @@ async function kirimKeSheet(item) {
       body: JSON.stringify(item)
     });
   } catch (err) {
-    console.error("Sheet Error:", err);
+    console.error("Sheet error:", err);
   }
 }
 
@@ -197,12 +187,9 @@ form.addEventListener("submit", async (e) => {
   const jumlah = parseInt(jumlahInput.value.replace(/\D/g, ""));
   const tipe = tipeSelect.value;
   const kategori = tipe === "keluar" ? kategoriSelect.value : "-";
-
-  // 🔥 TAMBAHAN OWNER
   const owner = tipe === "masuk" ? ownerSelect.value : "-";
 
   const item = {
-    id: editIndex !== null ? data[editIndex].id : Date.now().toString(),
     ket,
     jumlah,
     tipe,
@@ -213,20 +200,18 @@ form.addEventListener("submit", async (e) => {
 
   if (editIndex === null) {
     await addData(item);
-    data.push(item);
   } else {
-    await updateData(editIndex, item);
-    data[editIndex] = item;
+    const id = data[editIndex].id;
+    await updateData(id, item);
     editIndex = null;
   }
 
   kirimKeSheet(item);
 
-  saveCache();
-  render();
-
   form.reset();
   kategoriSelect.style.display = "none";
+
+  await loadData(); // 🔥 FIX WAJIB (SYNC REAL FIREBASE)
 });
 
 // ==========================
@@ -255,63 +240,53 @@ function editData(index) {
 function render() {
   tbody.innerHTML = "";
 
-  let totalMasuk = 0;
-  let totalKeluar = 0;
+  let masuk = 0;
+  let keluar = 0;
 
   let kategoriMap = {};
   let ownerMap = { sulala: 0, surere: 0 };
 
-  data.forEach((item, index) => {
+  data.forEach((item, i) => {
     if (item.tipe === "masuk") {
-      totalMasuk += item.jumlah;
+      masuk += item.jumlah;
 
-      // 🔥 OWNER CHART
       if (item.owner === "sulala") ownerMap.sulala += item.jumlah;
       if (item.owner === "surere") ownerMap.surere += item.jumlah;
     } else {
-      totalKeluar += item.jumlah;
+      keluar += item.jumlah;
 
-      if (!kategoriMap[item.kategori]) {
-        kategoriMap[item.kategori] = 0;
-      }
-      kategoriMap[item.kategori] += item.jumlah;
+      kategoriMap[item.kategori] =
+        (kategoriMap[item.kategori] || 0) + item.jumlah;
     }
 
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${index + 1}</td>
-      <td>${item.ket}</td>
-      <td>${item.tipe}</td>
-      <td>${item.kategori}</td>
-      <td>${formatRupiah(item.jumlah)}</td>
-      <td>
-        <button onclick="editData(${index})">✏️</button>
-        <button onclick="deleteData(${index})">🗑️</button>
-      </td>
+    tbody.innerHTML += `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${item.ket}</td>
+        <td>${item.tipe}</td>
+        <td>${item.kategori}</td>
+        <td>${formatRupiah(item.jumlah)}</td>
+        <td>
+          <button onclick="editData(${i})">✏️</button>
+          <button onclick="deleteData(${i})">🗑️</button>
+        </td>
+      </tr>
     `;
-
-    tbody.appendChild(tr);
   });
 
-  const saldo = totalMasuk - totalKeluar;
+  totalMasukEl.textContent = formatRupiah(masuk);
+  totalKeluarEl.textContent = formatRupiah(keluar);
+  saldoEl.textContent = formatRupiah(masuk - keluar);
 
-  totalMasukEl.innerText = formatRupiah(totalMasuk);
-  totalKeluarEl.innerText = formatRupiah(totalKeluar);
-  saldoEl.innerText = formatRupiah(saldo);
-
-  // chart utama
-  chart.data.datasets[0].data = [totalMasuk, totalKeluar];
+  chart.data.datasets[0].data = [masuk, keluar];
   chart.update();
 
-  // kategori chart
   kategoriChart.data.labels = Object.keys(kategoriMap);
   kategoriChart.data.datasets[0].data = Object.values(kategoriMap);
   kategoriChart.data.datasets[0].backgroundColor =
     generateColors(Object.keys(kategoriMap).length);
   kategoriChart.update();
 
-  // 🔥 OWNER CHART
   ownerChart.data.datasets[0].data = [
     ownerMap.sulala,
     ownerMap.surere
@@ -322,7 +297,9 @@ function render() {
 }
 
 // ==========================
-// INIT
+// INIT (FIX RACE CONDITION)
 // ==========================
-loadCache();
-loadData();
+window.addEventListener("load", () => {
+  loadCache();
+  loadData();
+});
