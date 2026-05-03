@@ -27,7 +27,7 @@ let data = [];
 let editIndex = null;
 
 // ==========================
-// CACHE LOCAL STORAGE
+// CACHE
 // ==========================
 function saveCache() {
   localStorage.setItem("transaksi_cache", JSON.stringify(data));
@@ -42,10 +42,10 @@ function loadCache() {
 }
 
 // ==========================
-// FORMAT RUPIAH
+// FORMAT
 // ==========================
-function formatRupiah(angka) {
-  return "Rp " + Number(angka).toLocaleString("id-ID");
+function formatRupiah(num) {
+  return "Rp " + Number(num).toLocaleString("id-ID");
 }
 
 // ==========================
@@ -72,7 +72,7 @@ const chart = new Chart(document.getElementById("myChart"), {
 });
 
 // ==========================
-// CHART KATEGORI
+// KATEGORI CHART
 // ==========================
 const kategoriChart = new Chart(document.getElementById("kategoriChart"), {
   type: "pie",
@@ -86,7 +86,7 @@ const kategoriChart = new Chart(document.getElementById("kategoriChart"), {
 });
 
 // ==========================
-// CHART OWNER
+// OWNER CHART
 // ==========================
 const ownerChart = new Chart(document.getElementById("ownerChart"), {
   type: "bar",
@@ -117,33 +117,30 @@ tipeSelect.addEventListener("change", () => {
 });
 
 // ==========================
-// FIREBASE LOAD (FIX AMAN)
+// FIREBASE REALTIME (INI INTI)
 // ==========================
-async function loadData() {
-  try {
-    console.log("Loading Firestore...");
+function startRealtime() {
+  fb.onSnapshot(
+    fb.collection(db, "transaksi"),
+    (snapshot) => {
+      data = [];
 
-    const snap = await fb.getDocs(fb.collection(db, "transaksi"));
+      snapshot.forEach(docSnap => {
+        data.push({ id: docSnap.id, ...docSnap.data() });
+      });
 
-    data = [];
-
-    snap.forEach(docSnap => {
-      data.push({ id: docSnap.id, ...docSnap.data() });
-    });
-
-    console.log("DATA LOADED:", data.length);
-
-    saveCache();
-    render();
-
-  } catch (err) {
-    console.error("Firebase gagal load:", err);
-    loadCache();
-  }
+      render();
+      saveCache();
+    },
+    (err) => {
+      console.error("Realtime error:", err);
+      loadCache();
+    }
+  );
 }
 
 // ==========================
-// FIREBASE CRUD
+// CRUD
 // ==========================
 async function addData(item) {
   await fb.addDoc(fb.collection(db, "transaksi"), item);
@@ -158,12 +155,11 @@ async function deleteData(index) {
 
   if (confirm("Hapus transaksi?")) {
     await fb.deleteDoc(fb.doc(db, "transaksi", id));
-    await loadData();
   }
 }
 
 // ==========================
-// SHEET SYNC
+// SHEET
 // ==========================
 async function kirimKeSheet(item) {
   try {
@@ -173,7 +169,7 @@ async function kirimKeSheet(item) {
       body: JSON.stringify(item)
     });
   } catch (err) {
-    console.error("Sheet error:", err);
+    console.error(err);
   }
 }
 
@@ -210,8 +206,6 @@ form.addEventListener("submit", async (e) => {
 
   form.reset();
   kategoriSelect.style.display = "none";
-
-  await loadData(); // 🔥 FIX WAJIB (SYNC REAL FIREBASE)
 });
 
 // ==========================
@@ -235,7 +229,7 @@ function editData(index) {
 }
 
 // ==========================
-// RENDER
+// RENDER (REALTIME AUTO)
 // ==========================
 function render() {
   tbody.innerHTML = "";
@@ -297,9 +291,9 @@ function render() {
 }
 
 // ==========================
-// INIT (FIX RACE CONDITION)
+// INIT
 // ==========================
 window.addEventListener("load", () => {
   loadCache();
-  loadData();
+  startRealtime(); // 🔥 REALTIME FIREBASE
 });
