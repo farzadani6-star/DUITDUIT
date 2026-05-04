@@ -1,9 +1,16 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+  <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3b82f6">
+
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KeuanganKu</title>
+  <title>DUITT DUITT</title>
 
   <link rel="stylesheet" href="style.css">
 
@@ -13,7 +20,7 @@
 <body>
 
 <div class="container">
-  <h1>💰 KeuanganKu</h1>
+  <h1>💰 DUITT DUITT</h1>
 
   <!-- ================= FORM ================= -->
   <form id="form">
@@ -53,13 +60,25 @@
   </form>
 
   <!-- ================= SUMMARY ================= -->
-  <div class="summary">
-    <p>Pemasukan: <span id="totalMasuk">Rp 0</span></p>
-    <p>Pengeluaran: <span id="totalKeluar">Rp 0</span></p>
-    <p>Saldo: <span id="saldo">Rp 0</span></p>
+<div class="summary-grid">
+  <div class="box green">
+    <span>Pemasukan</span>
+    <h3 id="totalMasuk">Rp 0</h3>
   </div>
 
+  <div class="box red">
+    <span>Pengeluaran</span>
+    <h3 id="totalKeluar">Rp 0</h3>
+  </div>
+
+  <div class="box blue">
+    <span>Saldo</span>
+    <h3 id="saldo">Rp 0</h3>
+  </div>
+</div>
+
   <!-- ================= TABEL ================= -->
+  <div class="table-wrapper">
   <table>
     <thead>
       <tr>
@@ -73,27 +92,77 @@
     </thead>
     <tbody id="tbody"></tbody>
   </table>
-  
+  </div>
 <div class="chart-box">
   <h3>💰 Pemasukan SULALA vs SURERE</h3>
   <canvas id="ownerChart"></canvas>
 </div>
   <!-- ================= CHART UTAMA ================= -->
   <div class="chart-box">
-    <h3>📊 Pemasukan vs Pengeluaran</h3>
+    <h3> Pemasukan vs Pengeluaran</h3>
     <canvas id="myChart"></canvas>
   </div>
 
   <!-- ================= CHART KATEGORI ================= -->
   <div class="chart-box">
-    <h3>🥧 Pengeluaran per Kategori</h3>
+    <h3> Pengeluaran per Kategori</h3>
     <canvas id="kategoriChart"></canvas>
   </div>
 
+<!-- ================= CHART PEMASUKAN BULAN ================= -->
+<div class="chart-box">
+  <h3>📈 Pemasukan</h3>
+
+  <div class="chart-toggle">
+    <button onclick="setMode('bulan')" id="btnBulan">Bulanan</button>
+    <button onclick="setMode('minggu')" id="btnMinggu">Mingguan</button>
+  </div>
+
+  <canvas id="bulanChart"></canvas>
 </div>
+<div>
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<button class="btn-export" onclick="exportPDF()">
+  <svg class="icon" viewBox="0 0 24 24" fill="none">
+    <path d="M12 3V14M12 14L8 10M12 14L16 10" 
+      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M4 17V19C4 19.5523 4.44772 20 5 20H19C19.5523 20 20 19.5523 20 19V17" 
+      stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </svg>
+
+  <span>Export PDF</span>
+</button>
+  </div>
+</div>
+
+<input 
+  type="date" 
+  id="datePickerHidden" 
+  value="${currentDate}"
+  style="
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    opacity: 0;
+    pointer-events: none;
+  "
+>
+
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc,
+  updateDoc,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBeubIUWKxtxShvHiQ9U7EKLDOWQanl3cw",
@@ -105,12 +174,28 @@ const firebaseConfig = {
   measurementId: "G-W65YZSXDMX"
 };
 
+// ==========================
+// INIT FIREBASE
+// ==========================
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// bikin global biar bisa dipakai di script.js
+// ==========================
+// GLOBAL EXPORT (WAJIB)
+// ==========================
 window.db = db;
-window.fb = { collection, addDoc, getDocs, deleteDoc, doc, updateDoc };
+
+window.fb = {
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc,
+  updateDoc,
+  onSnapshot // 🔥 penting untuk realtime
+};
+
+console.log("🔥 Firebase Ready & Realtime Enabled");
 </script>
 <script src="script.js"></script>
 
