@@ -88,6 +88,9 @@ button {
   font-weight: bold;
 }
 .summary-grid{
+  position: sticky;
+  top: 10px; /* kasih jarak dikit biar ga nempel banget */
+  z-index: 20;
   display:grid;
   grid-template-columns:1fr 1fr 1fr;
   gap:10px;

@@ -22,8 +22,27 @@
 <div class="container">
   <h1>💰 DUITT DUITT</h1>
 
+    <!-- ================= SUMMARY ================= -->
+<div class="summary-grid">
+  <div class="box green">
+    <span>Pemasukan</span>
+    <h3 id="totalMasuk">Rp 0</h3>
+  </div>
+
+  <div class="box red">
+    <span>Pengeluaran</span>
+    <h3 id="totalKeluar">Rp 0</h3>
+  </div>
+
+  <div class="box blue">
+    <span>Saldo</span>
+    <h3 id="saldo">Rp 0</h3>
+  </div>
+</div>
+
   <!-- ================= FORM ================= -->
   <form id="form">
+    <input type="date" id="tanggalInput">
     <input type="text" id="ket" placeholder="Keterangan" required>
 
     <input type="text" id="jumlah" placeholder="Jumlah (Rp)" required>
@@ -58,23 +77,7 @@
 
     <button type="submit">Tambah</button>
   </form>
-    <!-- ================= SUMMARY ================= -->
-<div class="summary-grid">
-  <div class="box green">
-    <span>Pemasukan</span>
-    <h3 id="totalMasuk">Rp 0</h3>
-  </div>
 
-  <div class="box red">
-    <span>Pengeluaran</span>
-    <h3 id="totalKeluar">Rp 0</h3>
-  </div>
-
-  <div class="box blue">
-    <span>Saldo</span>
-    <h3 id="saldo">Rp 0</h3>
-  </div>
-</div>
   <!-- ==========================
        TAGIHAN STICKY
   ========================== -->
@@ -140,7 +143,7 @@
   </table>
   </div>
 <div class="chart-box">
-  <h3>💰 Pemasukan SULALA vs SURERE</h3>
+  <h3>💰 Pemasukan kita </h3>
   <canvas id="ownerChart"></canvas>
 </div>
   <!-- ================= CHART UTAMA ================= -->

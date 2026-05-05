@@ -239,7 +239,9 @@ form.addEventListener("submit", async (e) => {
     tipe: tipeSelect.value,
     kategori: tipeSelect.value === "keluar" ? kategoriSelect.value : "-",
     owner: tipeSelect.value === "masuk" ? ownerSelect.value : "-",
-    tanggal: new Date().toISOString()
+    tanggal: tanggalInput.value 
+  ? new Date(tanggalInput.value).toISOString()
+  : new Date().toISOString()
   };
 
   if (!editId) await addData(item);
@@ -943,4 +945,10 @@ function renderTagihan() {
       `;
     }
   });
+}
+
+const tanggalInput = document.getElementById("tanggalInput");
+
+if (tanggalInput) {
+  tanggalInput.value = new Date().toISOString().split("T")[0];
 }
