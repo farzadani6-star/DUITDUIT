@@ -302,3 +302,530 @@ td button {
 .btn-export:hover .icon {
   transform: translateY(2px);
 }
+
+/* ==========================
+   CART / KERANJANG FINAL FIX
+========================== */
+.keranjang {
+  margin-top: 20px;
+  padding: 15px;
+  background: #1e293b;
+  border-radius: 15px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+  color: white;
+
+  position: relative;
+  z-index: 2;
+
+  overflow-x: auto; /* <- FIX SCROLL SAMPING */
+}
+
+/* ==========================
+   INPUT AREA
+========================== */
+.keranjang input {
+  padding: 10px;
+  margin: 5px 5px 10px 0;
+  border: none;
+  border-radius: 10px;
+  background: #334155;
+  color: white;
+  font-size: 13px;
+  outline: none;
+}
+
+.keranjang input:focus {
+  outline: 2px solid #3b82f6;
+}
+
+/* ==========================
+   BUTTON
+========================== */
+.keranjang button {
+  padding: 10px 12px;
+  margin: 5px 5px 10px 0;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  font-weight: bold;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.keranjang button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+/* ==========================
+   WRAPPER TABLE (IMPORTANT FIX)
+========================== */
+.keranjang table {
+  width: 100%;
+  min-width: 600px; /* biar bisa scroll samping */
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 13px;
+  color: white;
+}
+
+/* ==========================
+   HEADER
+========================== */
+.keranjang th {
+  background: #475569;
+  color: white;
+  padding: 10px;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* ==========================
+   BODY SCROLL FIX
+========================== */
+.keranjang tbody {
+  display: block;
+  max-height: 250px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* penting: sync column */
+.keranjang thead,
+.keranjang tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* ==========================
+   ROW STYLE
+========================== */
+.keranjang td {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid #334155;
+}
+
+/* zebra */
+.keranjang tbody tr:nth-child(even) {
+  background: #334155;
+}
+
+/* ==========================
+   CHECKBOX
+========================== */
+.keranjang input[type="checkbox"] {
+  transform: scale(1.2);
+  cursor: pointer;
+}
+
+/* ==========================
+   TOTAL BELANJA
+========================== */
+#totalBelanja {
+  color: #22c55e;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* ==========================
+   RESPONSIVE
+========================== */
+@media (max-width: 480px) {
+  .keranjang table {
+    min-width: 500px;
+  }
+
+  .keranjang td,
+  .keranjang th {
+    font-size: 11px;
+    padding: 8px;
+  }
+
+  .keranjang tbody {
+    max-height: 200px;
+  }
+}
+
+.divider {
+  height: 1px;
+  background: #334155;
+  margin: 15px 0;
+  width: 100%;
+}
+
+/* ==========================
+   TOAST NOTIFICATION
+========================== */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: white;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 9999;
+}
+
+/* SHOW STATE */
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-10px);
+}
+
+/* SUCCESS */
+.toast.success {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+/* ERROR */
+.toast.error {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+/* INFO */
+.toast.info {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+/* ==========================
+   CONFIRM MODAL
+========================== */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+}
+
+.confirm-box {
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 15px;
+  text-align: center;
+  color: white;
+  width: 250px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+.confirm-btn {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+}
+
+.confirm-btn button {
+  flex: 1;
+  margin: 0 5px;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#yes {
+  background: #ef4444;
+  color: white;
+}
+
+#no {
+  background: #334155;
+  color: white;
+}
+
+/* ==========================
+   BOROS ANALYZER BOX
+========================== */
+.boros-box {
+  margin-top: 20px;
+  padding: 15px;
+  background: #1e293b;
+  border-radius: 15px;
+  color: white;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  border: 1px solid #334155;
+}
+
+/* TITLE */
+.boros-box h3 {
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #fbbf24;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ==========================
+   LIST WRAPPER (SCROLL AREA)
+========================== */
+#borosList {
+  max-height: 220px; /* ± 5 item */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 5px;
+  scroll-behavior: smooth;
+}
+
+/* ==========================
+   ITEM ROW
+========================== */
+.boros-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 10px 0;
+  border-bottom: 1px solid #334155;
+
+  font-size: 13px;
+  transition: 0.2s;
+}
+
+/* hover effect */
+.boros-item:hover {
+  background: rgba(59, 130, 246, 0.08);
+  padding-left: 5px;
+  border-radius: 6px;
+}
+
+/* label kiri */
+.boros-item span {
+  color: #e2e8f0;
+  font-weight: 500;
+}
+
+/* jumlah kanan */
+.boros-item b {
+  color: #ef4444;
+  font-weight: bold;
+}
+
+/* ==========================
+   SCROLLBAR (BIAR PREMIUM)
+========================== */
+#borosList::-webkit-scrollbar {
+  width: 4px;
+}
+
+#borosList::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 10px;
+}
+
+#borosList::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* ==========================
+   RESPONSIVE
+========================== */
+@media (max-width: 480px) {
+  .boros-box {
+    padding: 12px;
+  }
+
+  .boros-item {
+    font-size: 12px;
+  }
+
+  #borosList {
+    max-height: 180px;
+  }
+}
+
+/* ==========================
+   TAGIHAN BOX
+========================== */
+.tagihan-box {
+  margin-top: 20px;
+  padding: 15px;
+  background: #1e293b;
+  border-radius: 15px;
+  color: white;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  border: 1px solid #334155;
+}
+
+/* title */
+.tagihan-box h3 {
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+/* input */
+.tagihan-box input {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: #334155;
+  color: white;
+  font-size: 13px;
+}
+
+.tagihan-box input:focus {
+  outline: 2px solid #3b82f6;
+}
+
+/* button */
+.tagihan-box button {
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* ==========================
+   STICKY CONTAINER
+========================== */
+.note-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 5px;
+}
+
+/* ==========================
+   STICKY NOTE
+========================== */
+.note {
+  width: 48%;
+  min-height: 90px;
+
+  background: #fef08a;
+  color: #111;
+
+  padding: 12px;
+  border-radius: 12px;
+
+  font-size: 13px;
+
+  box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  transform: rotate(-1deg);
+  transition: all 0.2s ease;
+}
+
+/* hover */
+.note:hover {
+  transform: rotate(0deg) scale(1.03);
+}
+
+/* title */
+.note-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+/* date */
+.note-date {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+/* action */
+.note-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* checkbox */
+.note input[type="checkbox"] {
+  transform: scale(1.1);
+  cursor: pointer;
+}
+
+/* delete button */
+.note button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* ==========================
+   VARIASI WARNA (BIAR HIDUP)
+========================== */
+.note:nth-child(2n) { background: #bae6fd; }
+.note:nth-child(3n) { background: #bbf7d0; }
+.note:nth-child(4n) { background: #fecaca; }
+
+/* ==========================
+   TELAT (OVERDUE)
+========================== */
+.note.danger {
+  background: #ef4444;
+  color: white;
+}
+
+/* ==========================
+   DONE NOTE
+========================== */
+.note.done {
+  background: #334155;
+  color: #94a3b8;
+  
+}
+
+/* ==========================
+   HISTORY (KECIL)
+========================== */
+.note-container.small .note {
+  width: 100%;
+  transform: none;
+}
+
+/* ==========================
+   SCROLLBAR
+========================== */
+.note-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.note-container::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 10px;
+}
+
+/* ==========================
+   RESPONSIVE
+========================== */
+@media (max-width: 480px) {
+  .note {
+    width: 100%;
+    transform: none;
+  }
+
+  .note-container {
+    max-height: 200px;
+  }
+}

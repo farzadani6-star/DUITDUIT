@@ -26,7 +26,7 @@ const jumlahInput = document.getElementById("jumlah");
 let currentDate = new Date().toISOString().split("T")[0];
 let data = [];
 let editId = null;
-
+let cart = [];
 // ==========================
 // FORMAT
 // ==========================
@@ -88,9 +88,15 @@ document.addEventListener("change", (e) => {
 // INPUT FORMAT
 // ==========================
 jumlahInput.addEventListener("input", (e) => {
-  let v = e.target.value.replace(/\D/g, "");
-  if (!v) return (e.target.value = "");
-  e.target.value = formatRupiah(parseInt(v));
+  let value = e.target.value.replace(/\D/g, "");
+
+  if (!value) {
+    e.target.value = "";
+    return;
+  }
+
+  // cuma angka → ubah jadi 1.000 style (tanpa Rp)
+  e.target.value = Number(value).toLocaleString("id-ID");
 });
 
 // ==========================
@@ -181,11 +187,45 @@ async function updateData(id, item) {
 }
 
 async function deleteData(id) {
-  if (confirm("Hapus transaksi?")) {
-    await fb.deleteDoc(fb.doc(db, "transaksi", id));
-  }
+  const yakin = await customConfirm("Hapus transaksi ini?");
+
+  if (!yakin) return;
+
+  await fb.deleteDoc(fb.doc(db, "transaksi", id));
+
+  showToast("Dah terhaposs!", "success");
 }
 window.deleteData = deleteData;
+
+function customConfirm(message) {
+  return new Promise((resolve) => {
+    const modal = document.createElement("div");
+
+    modal.innerHTML = `
+      <div class="confirm-box">
+        <p>${message}</p>
+        <div class="confirm-btn">
+          <button id="no">Batal</button>
+          <button id="yes">Hapus</button>
+        </div>
+      </div>
+    `;
+
+    modal.className = "confirm-overlay";
+    document.body.appendChild(modal);
+
+    document.getElementById("yes").onclick = () => {
+      modal.remove();
+      resolve(true);
+    };
+
+    document.getElementById("no").onclick = () => {
+      modal.remove();
+      resolve(false);
+    };
+  });
+}
+
 
 // ==========================
 // SUBMIT
@@ -335,6 +375,8 @@ function render() {
   bulanChart.data.labels = Object.keys(bulanMap).map(i => namaBulan[i]);
   bulanChart.data.datasets[0].data = Object.values(bulanMap);
   bulanChart.update();
+  
+  renderBoros();
 }
 
 // ==========================
@@ -471,7 +513,11 @@ function formatTanggalIndo(dateStr) {
 // ==========================
 // INIT
 // ==========================
-window.addEventListener("load", startRealtime);
+window.addEventListener("load", () => {
+  startRealtime();        // transaksi
+  startCartRealtime();    // cart
+  startTagihanRealtime(); // 🔥 tagihan
+});
 
 let mode = "bulanan";
 
@@ -503,5 +549,398 @@ if ("serviceWorker" in navigator) {
 
   navigator.serviceWorker.addEventListener("controllerchange", () => {
     window.location.reload();
+  });
+}
+
+
+// ==========================
+// START REALTIME CART
+// ==========================
+function startCartRealtime() {
+  fb.onSnapshot(fb.collection(db, "cart"), (snap) => {
+    cart = snap.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }));
+
+    renderCart();
+  });
+}
+window.startCartRealtime = startCartRealtime;
+
+
+// ==========================
+// ADD ITEM
+// ==========================
+async function addCartItem() {
+  const namaInput = document.getElementById("namaBelanja");
+  if (!namaInput) return;
+
+  const nama = namaInput.value.trim();
+  if (!nama) return showToast("Tuku apa kauni!");
+
+  await fb.addDoc(fb.collection(db, "cart"), {
+    nama,
+    harga: 0,
+    checked: false,
+    createdAt: new Date().toISOString()
+  });
+
+  namaInput.value = "";
+}
+window.addCartItem = addCartItem;
+
+
+// ==========================
+// TOGGLE CHECKBOX
+// ==========================
+async function toggleCart(index) {
+  const item = cart[index];
+  if (!item) return;
+
+  await fb.updateDoc(
+    fb.doc(db, "cart", item.id),
+    { checked: !item.checked }
+  );
+}
+window.toggleCart = toggleCart;
+
+
+// ==========================
+// UPDATE HARGA (NO LAG)
+// ==========================
+let cartTimeout;
+
+function updateCartPriceDebounce(index, el) {
+  clearTimeout(cartTimeout);
+
+  cartTimeout = setTimeout(async () => {
+    const item = cart[index];
+    if (!item) return;
+
+    const clean = parseInt((el.value || "").replace(/\D/g, ""));
+
+    await fb.updateDoc(
+      fb.doc(db, "cart", item.id),
+      { harga: isNaN(clean) ? 0 : clean }
+    );
+
+  }, 300);
+}
+window.updateCartPriceDebounce = updateCartPriceDebounce;
+
+
+// ==========================
+// DELETE ITEM
+// ==========================
+async function removeCart(index) {
+  const item = cart[index];
+  if (!item) return;
+
+  await fb.deleteDoc(fb.doc(db, "cart", item.id));
+}
+window.removeCart = removeCart;
+
+
+// ==========================
+// RENDER CART
+// ==========================
+function renderCart() {
+  const tbody = document.getElementById("cartBody");
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  let total = 0;
+
+  cart.forEach((item, i) => {
+    if (item.checked) total += item.harga || 0;
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${i + 1}</td>
+
+        <td>${item.nama}</td>
+
+        <td>
+          <input type="text"
+            value="${item.harga ? formatRupiah(item.harga) : ""}"
+            oninput="updateCartPriceDebounce(${i}, this)"
+            placeholder="Rp">
+        </td>
+
+        <td>
+          <input type="checkbox"
+            ${item.checked ? "checked" : ""}
+            onchange="toggleCart(${i})">
+        </td>
+
+        <td>
+          <button onclick="removeCart(${i})">🗑️</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  const totalEl = document.getElementById("totalBelanja");
+  if (totalEl) {
+    totalEl.innerText = formatRupiah(total);
+  }
+}
+
+
+// ==========================
+// SAVE KE KEUANGAN
+// ==========================
+async function saveCartToFinance() {
+  for (let item of cart) {
+    if (!item.checked) continue;
+
+    await addData({
+      ket: item.nama,
+      jumlah: item.harga || 0,
+      tipe: "keluar",
+      kategori: "Belanja",
+      owner: "-",
+      tanggal: new Date().toISOString()
+    });
+
+    await fb.deleteDoc(fb.doc(db, "cart", item.id));
+  }
+
+  showToast("Cihuyyy!");
+}
+window.saveCartToFinance = saveCartToFinance;
+// ==========================
+// TOAST SYSTEM (REPLACE showToast)
+// ==========================
+function showToast(message, type = "info") {
+  const toast = document.getElementById("toast");
+  if (!toast) return;
+
+  toast.className = "toast " + type;
+  toast.innerText = message;
+
+  toast.classList.add("show");
+
+  clearTimeout(window.toastTimer);
+  window.toastTimer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2000);
+}
+window.showToast = showToast;
+
+function analyzeBoros() {
+  const map = {};
+
+  data.forEach(item => {
+    if (item.tipe !== "keluar") return;
+
+    const kategori = item.kategori || "lainnya";
+    map[kategori] = (map[kategori] || 0) + (item.jumlah || 0);
+  });
+
+  const sorted = Object.entries(map)
+    .sort((a, b) => b[1] - a[1]); // terbesar ke kecil
+
+  return sorted;
+}
+
+function renderBoros() {
+  const result = analyzeBoros();
+  const container = document.getElementById("borosList");
+  if (!container) return;
+
+  let html = "";
+
+  result.forEach(([kategori, total], i) => {
+    html += `
+      <div class="boros-item">
+        <span>#${i + 1} ${kategori}</span>
+        <b>Rp ${total.toLocaleString("id-ID")}</b>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+
+  // 🔥 AUTO HEIGHT CONTROL
+  if (result.length > 5) {
+    container.style.overflowY = "auto";
+    container.style.maxHeight = "100px";
+  } else {
+    container.style.overflowY = "visible";
+    container.style.maxHeight = "none";
+  }
+}
+
+// ==========================
+// TAGIHAN REALTIME (FINAL)
+// ==========================
+let tagihan = [];
+
+// ==========================
+// START REALTIME
+// ==========================
+function startTagihanRealtime() {
+  fb.onSnapshot(fb.collection(db, "tagihan"), (snap) => {
+    tagihan = snap.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }));
+
+    renderTagihan();
+  });
+}
+window.startTagihanRealtime = startTagihanRealtime;
+
+
+// ==========================
+// ADD TAGIHAN
+// ==========================
+async function addTagihan() {
+  const namaEl = document.getElementById("tagihanNama");
+  const tanggalEl = document.getElementById("tagihanTanggal");
+  const hargaEl = document.getElementById("tagihanHarga");
+
+  if (!namaEl || !tanggalEl || !hargaEl) return;
+
+  const nama = namaEl.value.trim();
+  const tanggal = tanggalEl.value;
+  const harga = parseInt((hargaEl.value || "").replace(/\D/g, ""));
+
+  if (!nama || !tanggal || isNaN(harga)) {
+    return showToast("Isi Lahh boss!");
+  }
+
+  await fb.addDoc(fb.collection(db, "tagihan"), {
+    nama,
+    tanggal,
+    harga,
+    done: false,
+    pushed: false,
+    createdAt: new Date().toISOString()
+  });
+
+  namaEl.value = "";
+  tanggalEl.value = "";
+  hargaEl.value = "";
+}
+window.addTagihan = addTagihan;
+
+
+// ==========================
+// TOGGLE BAYAR
+// ==========================
+async function toggleTagihan(id) {
+  const item = tagihan.find(t => t.id === id);
+  if (!item) return;
+
+  const newDone = !item.done;
+
+  // update status dulu
+  await fb.updateDoc(
+    fb.doc(db, "tagihan", id),
+    { done: newDone }
+  );
+
+  // 🔥 kalau jadi "dibayar" → masuk ke keuangan
+  if (newDone && !item.pushed) {
+    await addData({
+      ket: item.nama,
+      jumlah: item.harga,
+      tipe: "keluar",
+      kategori: "Tagihan",
+      owner: "-",
+      tanggal: new Date().toISOString()
+    });
+
+    await fb.updateDoc(
+      fb.doc(db, "tagihan", id),
+      { pushed: true }
+    );
+  }
+}
+window.toggleTagihan = toggleTagihan;
+
+
+// ==========================
+// DELETE
+// ==========================
+async function deleteTagihan(id) {
+  await fb.deleteDoc(fb.doc(db, "tagihan", id));
+}
+window.deleteTagihan = deleteTagihan;
+
+
+// ==========================
+// FORMAT INPUT RUPIAH
+// ==========================
+document.addEventListener("input", (e) => {
+  if (e.target.id === "tagihanHarga") {
+    let v = e.target.value.replace(/\D/g, "");
+    if (!v) return (e.target.value = "");
+    e.target.value = formatRupiah(parseInt(v));
+  }
+});
+
+
+// ==========================
+// RENDER
+// ==========================
+function renderTagihan() {
+  const aktifBox = document.getElementById("tagihanBody");
+  const doneBox = document.getElementById("tagihanDone");
+
+  if (!aktifBox) return;
+
+  aktifBox.innerHTML = "";
+  if (doneBox) doneBox.innerHTML = "";
+
+  const now = new Date();
+
+  tagihan.forEach(t => {
+    const telat = new Date(t.tanggal) < now && !t.done;
+
+    // ======================
+    // BELUM BAYAR
+    // ======================
+    if (!t.done) {
+      aktifBox.innerHTML += `
+        <div class="note ${telat ? "danger" : ""}">
+          <div class="note-title">${t.nama}</div>
+          <div class="note-date">📅 ${t.tanggal}</div>
+          <div class="note-date">${formatRupiah(t.harga)}</div>
+
+          <div class="note-action">
+            <label>
+              <input type="checkbox"
+                onchange="toggleTagihan('${t.id}')">
+              Bayar
+            </label>
+
+            <button onclick="deleteTagihan('${t.id}')">🗑️</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // ======================
+    // SUDAH BAYAR
+    // ======================
+    else if (doneBox) {
+      doneBox.innerHTML += `
+        <div class="note done">
+          <div class="note-title">${t.nama}</div>
+          <div class="note-date">✔ ${formatRupiah(t.harga)}</div>
+
+          <div class="note-action">
+            <button onclick="deleteTagihan('${t.id}')">
+              🗑️ Hapus
+            </button>
+          </div>
+        </div>
+      `;
+    }
   });
 }

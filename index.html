@@ -58,8 +58,7 @@
 
     <button type="submit">Tambah</button>
   </form>
-
-  <!-- ================= SUMMARY ================= -->
+    <!-- ================= SUMMARY ================= -->
 <div class="summary-grid">
   <div class="box green">
     <span>Pemasukan</span>
@@ -76,6 +75,53 @@
     <h3 id="saldo">Rp 0</h3>
   </div>
 </div>
+  <!-- ==========================
+       TAGIHAN STICKY
+  ========================== -->
+  <div class="tagihan-box">
+
+    <h3>🧾 Tagihan</h3>
+
+    <input type="text" id="tagihanNama" placeholder="Nama tagihan">
+    <input type="date" id="tagihanTanggal">
+    <input type="text" id="tagihanHarga" placeholder="Nominal (Rp)">
+
+    <button onclick="addTagihan()">+ Tambah</button>
+
+    <div id="tagihanBody" class="note-container"></div>
+
+    <h4 style="margin-top:10px;">Harus Dibayar</h4>
+    <div id="tagihanDone" class="note-container small"></div>
+
+  </div>
+  
+<div class="keranjang">
+
+  <!-- INPUT NAMA SAJA -->
+  <input type="text" id="namaBelanja" placeholder="Nama Belanjaan">
+
+  <button type="button" onclick="addCartItem()">+ Tambah Barang</button>
+  <button type="button" onclick="saveCartToFinance()">Simpan Belanja</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>List</th>
+        <th>Harga</th>
+        <th>✔</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+
+    <tbody id="cartBody"></tbody>
+  </table>
+
+  <h3>Total Belanja: <span id="totalBelanja">Rp 0</span></h3>
+
+</div>
+
+  <div class="divider"></div>
 
   <!-- ================= TABEL ================= -->
   <div class="table-wrapper">
@@ -108,6 +154,13 @@
     <h3> Pengeluaran per Kategori</h3>
     <canvas id="kategoriChart"></canvas>
   </div>
+  
+  <!-- ================= BOROS ================= -->
+<div class="boros-box">
+  <h3>🔥 Boros di:</h3>
+  <div id="borosList"></div>
+</div>
+
 
 <!-- ================= CHART PEMASUKAN BULAN ================= -->
 <div class="chart-box">
@@ -198,6 +251,6 @@ window.fb = {
 console.log("🔥 Firebase Ready & Realtime Enabled");
 </script>
 <script src="script.js"></script>
-
+<div id="toast" class="toast"></div>
 </body>
 </html>
