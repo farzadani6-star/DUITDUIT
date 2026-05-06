@@ -80,7 +80,7 @@
 
   <div class="tagihan-box">
 
-    <h3>🧾 Tagihan</h3>
+    <h1>TAGIHAN</h1>
 
     <input type="text" id="tagihanNama" placeholder="Nama tagihan">
     <input type="date" id="tagihanTanggal">
@@ -97,7 +97,7 @@
   </div>
   <div id="page-belanja" class="page">
 <div class="keranjang">
-
+    <h1>💰 Belanja & Goals</h1>
   <!-- INPUT NAMA SAJA -->
   <input type="text" id="namaBelanja" placeholder="Nama Belanjaan">
 
@@ -121,6 +121,23 @@
   <h3>Total Belanja: <span id="totalBelanja">Rp 0</span></h3>
 
 </div>
+<div class="saldo-box">
+  💰 Saldo Utama:
+  <span id="saldoGoalText">Rp 0</span>
+</div>
+<div class="goals-box">
+
+  <h3>💖 Tabungan Goals</h3>
+
+  <input type="text" id="goalNama" placeholder="buat apee nii">
+  <input type="text" id="goalTarget" placeholder="Target (Rp)">
+
+  <button onclick="tambahGoal()">+ Buat </button>
+
+  <div id="goalsList"></div>
+
+</div>
+
 </div>
 
 
@@ -144,9 +161,6 @@
     <h3 id="saldo">Rp 0</h3>
   </div>
 </div>
-
-  <!-- ================= TABEL ================= -->
-  <div class="table-wrapper">
       <form id="form">
     <input type="date" id="tanggalInput">
     <input type="text" id="ket" placeholder="Keterangan" required>
@@ -183,6 +197,9 @@
 
     <button type="submit">Tambah</button>
   </form>
+  <!-- ================= TABEL ================= -->
+  <div class="table-wrapper">
+
   <table>
     <thead>
       <tr>

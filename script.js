@@ -162,17 +162,21 @@ tipeSelect.addEventListener("change", () => {
 // FIREBASE
 // ==========================
 function startRealtime() {
-  fb.onSnapshot(fb.collection(db, "transaksi"), (snap) => {
-    data = snap.docs.map(d => {
-      const raw = d.data();
-      return {
-        id: d.id,
-        ...raw,
-        tanggal: cleanDate(raw.tanggal)
-      };
-    });
-    render();
+fb.onSnapshot(fb.collection(db, "transaksi"), (snap) => {
+  data = snap.docs.map(d => {
+    const raw = d.data();
+    return {
+      id: d.id,
+      ...raw,
+      tanggal: raw.tanggal || new Date().toISOString()
+    };
   });
+
+  // 🔥 URUTKAN: LAMA → BARU (baru di bawah)
+  data.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+
+  render();
+});
 }
 
 // ==========================
@@ -278,6 +282,8 @@ window.editData = editData;
 // ==========================
 // RENDER
 // ==========================
+let saldoGlobal = 0;
+
 function render() {
   tbody.innerHTML = "";
 
@@ -352,7 +358,7 @@ function render() {
   });
 
   const saldo = totalMasukGlobal - totalKeluarGlobal;
-
+saldoGlobal = saldo; 
   totalMasukEl.textContent = formatRupiah(totalMasukBulan);
   totalKeluarEl.textContent = formatRupiah(totalKeluarBulan);
   saldoEl.textContent = formatRupiah(saldo);
@@ -379,6 +385,15 @@ function render() {
   bulanChart.update();
   
   renderBoros();
+  if (typeof updateTabunganUI === "function") {
+  updateTabunganUI();
+}
+
+const saldoGoalEl = document.getElementById("saldoGoalText");
+
+if (saldoGoalEl) {
+  saldoGoalEl.textContent = formatRupiah(saldoGlobal);
+}
 }
 
 // ==========================
@@ -520,6 +535,7 @@ window.addEventListener("load", () => {
   startCartRealtime();    // cart
   startTagihanRealtime(); // 🔥 tagihan
   startGalleryRealtime(); 
+  
 });
 
 let mode = "bulanan";
@@ -1023,7 +1039,7 @@ photoInput.addEventListener("change", async function (e) {
 
   } catch (err) {
     console.error(err);
-    alert("Upload gagal");
+    showToast("Upload gagal");
   }
 
   e.target.value = "";
@@ -1369,3 +1385,190 @@ function compressImageSmart(file, maxSizeKB = 700) {
     reader.readAsDataURL(file);
   });
 }
+
+// ==========================
+// 💖 GOALS SYSTEM (FINAL)
+// ==========================
+
+// ==========================
+// 💖 GOALS SYSTEM (FIREBASE REALTIME)
+// ==========================
+
+let goals = [];
+
+// ==========================
+// INIT REALTIME GOALS
+// ==========================
+function startGoalsRealtime() {
+  fb.onSnapshot(fb.collection(db, "goals"), (snap) => {
+    goals = snap.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }));
+
+    renderGoals();
+  });
+}
+
+// ==========================
+// FORMAT RUPIAH INPUT
+// ==========================
+function initGoalInputFormat() {
+  const input = document.getElementById("goalTarget");
+
+  if (!input) return;
+
+  input.addEventListener("input", (e) => {
+    let v = e.target.value.replace(/\D/g, "");
+    e.target.value = v ? Number(v).toLocaleString("id-ID") : "";
+  });
+}
+
+// ==========================
+// TAMBAH GOAL
+// ==========================
+async function tambahGoal() {
+  const nama = document.getElementById("goalNama").value.trim();
+  const raw = document.getElementById("goalTarget").value.replace(/\D/g, "");
+  const target = parseInt(raw);
+
+  if (!nama || !target) {
+    showToast("Isi semua data!");
+    return;
+  }
+
+  try {
+    await fb.addDoc(fb.collection(db, "goals"), {
+      nama,
+      target,
+      terkumpul: 0,
+      createdAt: new Date().toISOString()
+    });
+
+    document.getElementById("goalNama").value = "";
+    document.getElementById("goalTarget").value = "";
+
+  } catch (err) {
+    console.error(err);
+    showToast("Gagal tambah goal");
+  }
+}
+
+// ==========================
+// NABUNG KE GOAL (FIXED)
+// ==========================
+async function nabungGoal(id) {
+  const value = parseInt(prompt("Masukkan jumlah nabung:"));
+
+  if (!value || value <= 0) return;
+
+  if (value > saldoGlobal) {
+    showToast("Saldo tidak cukup!");
+    return;
+  }
+
+  const goal = goals.find(g => g.id === id);
+  if (!goal) return;
+
+  try {
+    // update progress goal
+    await fb.updateDoc(fb.doc(db, "goals", id), {
+      terkumpul: (goal.terkumpul || 0) + value
+    });
+
+    // masuk ke transaksi (SALDO otomatis dari sini)
+    await fb.addDoc(fb.collection(db, "transaksi"), {
+      ket: "Nabung - " + goal.nama,
+      tipe: "keluar",
+      kategori: "tabungan",
+      jumlah: value,
+      tanggal: new Date().toISOString()
+    });
+
+  } catch (err) {
+    console.error(err);
+    showToast("Gagal nabung");
+  }
+}
+
+// ==========================
+// HAPUS GOAL (REFUND FIXED)
+// ==========================
+async function hapusGoal(id) {
+  const goal = goals.find(g => g.id === id);
+  if (!goal) return;
+
+  const ok = await customConfirm("Hapus goal ini?");
+  if (!ok) return;
+
+  try {
+    // refund ke transaksi (saldo otomatis balik)
+    if (goal.terkumpul > 0) {
+      await fb.addDoc(fb.collection(db, "transaksi"), {
+        ket: "Refund Goal - " + goal.nama,
+        tipe: "masuk",
+        kategori: "tabungan",
+        jumlah: goal.terkumpul,
+        tanggal: new Date().toISOString()
+      });
+    }
+
+    // hapus goal
+    await fb.deleteDoc(fb.doc(db, "goals", id));
+
+  } catch (err) {
+    console.error(err);
+    showToast("Gagal hapus goal");
+  }
+}
+
+// ==========================
+// RENDER GOALS UI
+// ==========================
+function renderGoals() {
+  const el = document.getElementById("goalsList");
+  if (!el) return;
+
+  el.innerHTML = "";
+
+  if (goals.length === 0) {
+    el.innerHTML = "<p style='color:#888'>Belum ada goals 💭</p>";
+    return;
+  }
+
+  goals.forEach(g => {
+    const target = Number(g.target || 0);
+    const terkumpul = Number(g.terkumpul || 0);
+
+    const percent = target > 0
+      ? Math.min((terkumpul / target) * 100, 100)
+      : 0;
+
+    el.innerHTML += `
+      <div class="goal-card">
+        <h4>${g.nama}</h4>
+
+        <p>
+          ${formatRupiah(terkumpul)} / ${formatRupiah(target)}
+        </p>
+
+        <div class="goal-progress">
+          <div class="goal-fill" style="width:${percent}%"></div>
+        </div>
+
+        <small style="color:#aaa">${percent.toFixed(0)}% tercapai</small>
+
+        <button onclick="nabungGoal('${g.id}')">💰 Nabung</button>
+        <button onclick="hapusGoal('${g.id}')">❌ Hapus</button>
+      </div>
+    `;
+  });
+}
+
+// ==========================
+// INIT
+// ==========================
+window.addEventListener("load", () => {
+  startGoalsRealtime();
+  initGoalInputFormat();
+});
