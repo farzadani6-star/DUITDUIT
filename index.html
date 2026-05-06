@@ -19,10 +19,115 @@
 </head>
 <body>
 
-<div class="container">
-  <h1>💰 DUITT DUITT</h1>
 
-    <!-- ================= SUMMARY ================= -->
+
+
+<div class="container">
+
+  <div id="page-home" class="page active">
+
+<div class="home">
+
+  <!-- HEADER -->
+  <div class="home-header">
+
+    <!-- SVG ORNAMENT ATAS -->
+    <svg class="header-decor" viewBox="0 0 200 40">
+      <path d="M0,20 Q50,0 100,20 T200,20" stroke="#ff9ac2" fill="none" stroke-width="2"/>
+      <circle cx="100" cy="20" r="3" fill="#ff9ac2"/>
+    </svg>
+
+    <h2>FOTO</h2>
+    <p>Surere & Sulala</p>
+
+    <!-- SVG ORNAMENT BAWAH -->
+    <svg class="header-decor" viewBox="0 0 200 40">
+      <path d="M0,20 Q50,40 100,20 T200,20" stroke="#ffc1da" fill="none" stroke-width="2"/>
+    </svg>
+
+  </div>
+
+  <!-- HERO -->
+  <div class="hero-container">
+
+    <!-- SVG OVERLAY -->
+    <svg class="hero-overlay" viewBox="0 0 400 200" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="heroGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(255,150,200,0.3)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+        </linearGradient>
+      </defs>
+
+      <rect width="400" height="200" fill="url(#heroGrad)"/>
+    </svg>
+
+    <div id="heroPhoto" class="hero-photo"></div>
+  </div>
+
+  <!-- GALLERY DIVIDER -->
+ 
+
+  <!-- GALLERY -->
+  <div id="gallery" class="gallery"></div>
+
+</div>
+</div>
+  
+
+
+<div id="page-tagihan" class="page">
+
+  <div class="tagihan-box">
+
+    <h3>🧾 Tagihan</h3>
+
+    <input type="text" id="tagihanNama" placeholder="Nama tagihan">
+    <input type="date" id="tagihanTanggal">
+    <input type="text" id="tagihanHarga" placeholder="Nominal (Rp)">
+
+    <button onclick="addTagihan()">+ Tambah</button>
+
+    <div id="tagihanBody" class="note-container"></div>
+
+    <h4 style="margin-top:10px;">Harus Dibayar</h4>
+    <div id="tagihanDone" class="note-container small"></div>
+
+  </div>
+  </div>
+  <div id="page-belanja" class="page">
+<div class="keranjang">
+
+  <!-- INPUT NAMA SAJA -->
+  <input type="text" id="namaBelanja" placeholder="Nama Belanjaan">
+
+  <button type="button" onclick="addCartItem()">+ Tambah Barang</button>
+  <button type="button" onclick="saveCartToFinance()">Simpan Belanja</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>List</th>
+        <th>Harga</th>
+        <th>✔</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+
+    <tbody id="cartBody"></tbody>
+  </table>
+
+  <h3>Total Belanja: <span id="totalBelanja">Rp 0</span></h3>
+
+</div>
+</div>
+
+
+<div id="page-laporan" class="page">
+  
+    <h1>💰 DUITT DUITT</h1>
+<!-- =============== SUMMARY ================ -->
 <div class="summary-grid">
   <div class="box green">
     <span>Pemasukan</span>
@@ -40,8 +145,9 @@
   </div>
 </div>
 
-  <!-- ================= FORM ================= -->
-  <form id="form">
+  <!-- ================= TABEL ================= -->
+  <div class="table-wrapper">
+      <form id="form">
     <input type="date" id="tanggalInput">
     <input type="text" id="ket" placeholder="Keterangan" required>
 
@@ -77,57 +183,6 @@
 
     <button type="submit">Tambah</button>
   </form>
-
-  <!-- ==========================
-       TAGIHAN STICKY
-  ========================== -->
-  <div class="tagihan-box">
-
-    <h3>🧾 Tagihan</h3>
-
-    <input type="text" id="tagihanNama" placeholder="Nama tagihan">
-    <input type="date" id="tagihanTanggal">
-    <input type="text" id="tagihanHarga" placeholder="Nominal (Rp)">
-
-    <button onclick="addTagihan()">+ Tambah</button>
-
-    <div id="tagihanBody" class="note-container"></div>
-
-    <h4 style="margin-top:10px;">Harus Dibayar</h4>
-    <div id="tagihanDone" class="note-container small"></div>
-
-  </div>
-  
-<div class="keranjang">
-
-  <!-- INPUT NAMA SAJA -->
-  <input type="text" id="namaBelanja" placeholder="Nama Belanjaan">
-
-  <button type="button" onclick="addCartItem()">+ Tambah Barang</button>
-  <button type="button" onclick="saveCartToFinance()">Simpan Belanja</button>
-
-  <table>
-    <thead>
-      <tr>
-        <th>No</th>
-        <th>List</th>
-        <th>Harga</th>
-        <th>✔</th>
-        <th>Aksi</th>
-      </tr>
-    </thead>
-
-    <tbody id="cartBody"></tbody>
-  </table>
-
-  <h3>Total Belanja: <span id="totalBelanja">Rp 0</span></h3>
-
-</div>
-
-  <div class="divider"></div>
-
-  <!-- ================= TABEL ================= -->
-  <div class="table-wrapper">
   <table>
     <thead>
       <tr>
@@ -176,10 +231,6 @@
 
   <canvas id="bulanChart"></canvas>
 </div>
-<div>
-    
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 <button class="btn-export" onclick="exportPDF()">
   <svg class="icon" viewBox="0 0 24 24" fill="none">
     <path d="M12 3V14M12 14L8 10M12 14L16 10" 
@@ -190,8 +241,12 @@
 
   <span>Export PDF</span>
 </button>
-  </div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+  </div>
+
 
 <input 
   type="date" 
@@ -255,5 +310,44 @@ console.log("🔥 Firebase Ready & Realtime Enabled");
 </script>
 <script src="script.js"></script>
 <div id="toast" class="toast"></div>
+
+<input type="file" id="photoInput" accept="image/*" style="display:none;">
+<div class="bottom-nav">
+
+  <div class="nav-item active" onclick="setPage('home')">
+    <svg viewBox="0 0 24 24" class="icon">
+      <path d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3z" fill="currentColor"/>
+    </svg>
+    <p>Home</p>
+  </div>
+
+  <div class="nav-item" onclick="setPage('belanja')">
+    <svg viewBox="0 0 24 24" class="icon">
+      <path d="M7 4h-2l-1 2v2h2l3.6 7.59-1.35 2.45C7.52 18.37 8.48 20 10 20h9v-2h-9l1.1-2h5.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 21 7H6.21l-.94-2z"/>
+    </svg>
+    <p>Belanja</p>
+  </div>
+  <div class="nav-center" onclick="openUpload()">
+<svg viewBox="0 0 24 24" class="icon-center" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4 7h3l2-2h6l2 2h3v12H4z"></path>
+  <circle cx="12" cy="13" r="3"></circle>
+</svg>
+</div>
+
+  <div class="nav-item" onclick="setPage('tagihan')">
+    <svg viewBox="0 0 24 24" class="icon">
+      <path d="M7 2h10v20l-5-3-5 3V2z"/>
+    </svg>
+    <p>Tagihan</p>
+  </div>
+
+  <div class="nav-item" onclick="setPage('laporan')">
+    <svg viewBox="0 0 24 24" class="icon">
+      <path d="M3 13h4v8H3v-8zm7-6h4v14h-4V7zm7 3h4v11h-4V10z"/>
+    </svg>
+    <p>Laporan</p>
+  </div>
+
+</div>
 </body>
 </html>

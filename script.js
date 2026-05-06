@@ -519,6 +519,7 @@ window.addEventListener("load", () => {
   startRealtime();        // transaksi
   startCartRealtime();    // cart
   startTagihanRealtime(); // 🔥 tagihan
+  startGalleryRealtime(); 
 });
 
 let mode = "bulanan";
@@ -951,4 +952,420 @@ const tanggalInput = document.getElementById("tanggalInput");
 
 if (tanggalInput) {
   tanggalInput.value = new Date().toISOString().split("T")[0];
+}
+
+function setPage(page) {
+  const index = pages.indexOf(page);
+  if (index !== -1) {
+    goToPage(index);
+  }
+}
+window.setPage = setPage;
+
+// tombol tengah
+function openQuickAction() {
+  showToast("Quick Action (nanti bisa: tambah transaksi / belanja)");
+}
+window.openQuickAction = openQuickAction;
+
+let photos = [];
+let latestPhoto = null;
+
+// ==========================
+// INIT REALTIME
+// ==========================
+function startGalleryRealtime() {
+  fb.onSnapshot(fb.collection(db, "gallery"), (snap) => {
+    photos = snap.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }));
+
+    console.log("PHOTOS:", photos);
+
+    renderGallery();
+  });
+}
+
+// ==========================
+// OPEN FILE PICKER
+// ==========================
+function openUpload() {
+  document.getElementById("photoInput")?.click();
+}
+window.openUpload = openUpload;
+
+// ==========================
+// HANDLE UPLOAD (FIXED CLEAN)
+// ==========================
+window.addEventListener("load", () => {
+  const photoInput = document.getElementById("photoInput");
+
+  if (!photoInput) return;
+
+photoInput.addEventListener("change", async function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  try {
+    console.log("SMART COMPRESS START");
+
+    const compressed = await compressImageSmart(file, 700);
+
+    console.log("FINAL SIZE:", Math.round(compressed.length / 1024), "KB");
+
+    await fb.addDoc(fb.collection(db, "gallery"), {
+      url: compressed,
+      date: new Date().toISOString()
+    });
+
+    console.log("UPLOAD SUCCESS");
+
+  } catch (err) {
+    console.error(err);
+    alert("Upload gagal");
+  }
+
+  e.target.value = "";
+});
+});
+
+// ==========================
+// RENDER GALLERY + HERO
+// ==========================
+let slideIndex = 0;
+let slideInterval;
+
+function renderGallery() {
+  let startX = 0;
+let isTouching = false;
+
+
+  const el = document.getElementById("gallery");
+  const hero = document.getElementById("heroPhoto");
+
+  if (!el || !hero) return;
+
+  el.innerHTML = "";
+
+  if (photos.length === 0) {
+    hero.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999">
+        fotoo dulss gasii 💙
+      </div>
+    `;
+    return;
+  }
+
+  // ==========================
+  // HERO SLIDESHOW
+  // ==========================
+  function showSlide(index) {
+    slideIndex = (index + photos.length) % photos.length;
+
+    hero.innerHTML = `
+      <div class="hero-wrapper">
+        <img src="${photos[slideIndex].url}" class="hero-img slide-anim">
+        <div class="dots">
+          ${photos.map((_, i) => `
+            <span class="${i === slideIndex ? 'active' : ''}"></span>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  function nextSlide() {
+    showSlide(slideIndex + 1);
+  }
+
+  function prevSlide() {
+    showSlide(slideIndex - 1);
+  }
+
+  // clear interval biar gak numpuk
+  if (slideInterval) clearInterval(slideInterval);
+
+  showSlide(slideIndex);
+
+  // autoplay
+  slideInterval = setInterval(nextSlide, 3000);
+
+  // ==========================
+  // SWIPE TOUCH
+  // ==========================
+  hero.ontouchstart = (e) => {
+    startX = e.touches[0].clientX;
+    isTouching = true;
+    clearInterval(slideInterval);
+  };
+
+  hero.ontouchend = (e) => {
+    if (!isTouching) return;
+
+    const endX = e.changedTouches[0].clientX;
+    const diff = endX - startX;
+
+    if (Math.abs(diff) > 50) {
+      diff > 0 ? prevSlide() : nextSlide();
+    }
+
+    isTouching = false;
+    slideInterval = setInterval(nextSlide, 3000);
+  };
+
+  // ==========================
+  // TAP CLICK (kiri / kanan)
+  // ==========================
+  hero.onclick = (e) => {
+    const rect = hero.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+
+    x < rect.width / 2 ? prevSlide() : nextSlide();
+  };
+
+  // ==========================
+  // GALLERY GRID
+  // ==========================
+  photos.forEach(p => {
+    el.innerHTML += `
+      <div class="img-wrap">
+<div class="polaroid" onclick="openPhoto('${p.url}')">
+  <img src="${p.url}">
+</div>
+        <button class="delete-btn" onclick="deletePhoto('${p.id}')">✕</button>
+      </div>
+    `;
+  });
+}
+async function deletePhoto(id) {
+  const confirmDel = await customConfirm("Hapus foto ini?");
+  if (!confirmDel) return;
+
+  try {
+    await fb.deleteDoc(fb.doc(db, "gallery", id));
+  } catch (err) {
+    console.error(err);
+  }
+}
+// ==========================
+// FULLSCREEN VIEW
+// ==========================
+function openPhoto(url) {
+  const div = document.createElement("div");
+
+  let scale = 1;
+  let startDistance = 0;
+
+  let posX = 0;
+  let posY = 0;
+  let startX = 0;
+  let startY = 0;
+
+  let lastTap = 0;
+
+  Object.assign(div.style, {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "rgba(0,0,0,0.95)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 9999,
+    overflow: "hidden"
+  });
+
+  div.innerHTML = `
+    <img src="${url}" id="zoomImg" style="
+      max-width:100%;
+      max-height:100%;
+      transform: translate(0px,0px) scale(1);
+      transition: transform 0.15s ease;
+      touch-action: none;
+    ">
+  `;
+
+  const img = div.querySelector("#zoomImg");
+
+  function updateTransform() {
+    img.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+  }
+
+  // ===== TOUCH START =====
+  div.ontouchstart = (e) => {
+    if (e.touches.length === 2) {
+      startDistance = getDistance(e.touches[0], e.touches[1]);
+    }
+
+    if (e.touches.length === 1) {
+      startX = e.touches[0].clientX - posX;
+      startY = e.touches[0].clientY - posY;
+    }
+
+    // double tap zoom
+    const now = Date.now();
+    if (now - lastTap < 300) {
+      if (scale === 1) {
+        scale = 2;
+      } else {
+        scale = 1;
+        posX = 0;
+        posY = 0;
+      }
+      updateTransform();
+    }
+    lastTap = now;
+  };
+
+  // ===== TOUCH MOVE =====
+  div.ontouchmove = (e) => {
+    if (e.touches.length === 2) {
+      const newDistance = getDistance(e.touches[0], e.touches[1]);
+      scale = newDistance / startDistance;
+
+      if (scale < 1) scale = 1;
+      if (scale > 4) scale = 4;
+
+      updateTransform();
+    }
+
+    if (e.touches.length === 1 && scale > 1) {
+      posX = e.touches[0].clientX - startX;
+      posY = e.touches[0].clientY - startY;
+
+      updateTransform();
+    }
+  };
+
+  // ===== CLOSE =====
+  div.onclick = () => {
+    if (scale === 1) div.remove();
+  };
+
+  document.body.appendChild(div);
+}
+
+function getDistance(t1, t2) {
+  return Math.sqrt(
+    Math.pow(t2.clientX - t1.clientX, 2) +
+    Math.pow(t2.clientY - t1.clientY, 2)
+  );
+}
+// ==========================
+// INIT (PENTING)
+// ==========================
+window.addEventListener("load", startGalleryRealtime);
+
+function setPage(page) {
+  // hide semua
+  document.querySelectorAll(".page").forEach(p => {
+    p.classList.remove("active");
+  });
+
+  // show target
+  const target = document.getElementById("page-" + page);
+  if (target) target.classList.add("active");
+
+  // active nav
+  document.querySelectorAll(".nav-item").forEach(n => {
+    n.classList.remove("active");
+  });
+
+  event.currentTarget.classList.add("active");
+}
+window.setPage = setPage;
+
+// ==========================
+// SWIPE NAVIGATION ENGINE
+// ==========================
+const pages = ["home", "finance", "belanja", "tagihan", "laporan"];
+let currentPageIndex = 0;
+
+let startX = 0;
+let endX = 0;
+
+// sync awal
+function initPageIndex() {
+  const active = document.querySelector(".page.active");
+  if (!active) return;
+
+  const id = active.id.replace("page-", "");
+  currentPageIndex = pages.indexOf(id);
+}
+
+// pindah page
+function goToPage(index) {
+  if (index < 0 || index >= pages.length) return;
+
+  currentPageIndex = index;
+
+  document.querySelectorAll(".page").forEach(p => {
+    p.classList.remove("active");
+  });
+
+  const target = document.getElementById("page-" + pages[index]);
+  if (target) target.classList.add("active");
+
+  // update nav bawah
+  document.querySelectorAll(".nav-item").forEach(n => {
+    n.classList.remove("active");
+  });
+
+  const nav = document.querySelectorAll(".nav-item")[index];
+  if (nav) nav.classList.add("active");
+}
+
+function compressImageSmart(file, maxSizeKB = 700) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      const img = new Image();
+      img.src = e.target.result;
+
+      img.onload = async function () {
+        let quality = 0.9;
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        // resize awal
+        let width = img.width;
+        let height = img.height;
+
+        const maxWidth = 900;
+        if (width > maxWidth) {
+          height *= maxWidth / width;
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        let result;
+
+        // loop turunin kualitas sampai ukuran aman
+        while (quality > 0.3) {
+          result = canvas.toDataURL("image/jpeg", quality);
+
+          const sizeKB = Math.round(result.length / 1024);
+
+          console.log("TRY:", quality.toFixed(2), "=>", sizeKB, "KB");
+
+          if (sizeKB <= maxSizeKB) break;
+
+          quality -= 0.05;
+        }
+
+        resolve(result);
+      };
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
