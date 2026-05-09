@@ -1363,3 +1363,130 @@ td button {
 #saldoGoalText {
   color: #22c55e;
 }
+
+/* BOX */
+.boros-box{
+  margin-top:20px;
+  padding:16px;
+  border-radius:20px;
+  background:#1e293b;
+  color:white;
+}
+
+/* CARD */
+.boros-card{
+  background:#26354d;
+  border-radius:18px;
+  padding:14px;
+  margin-top:12px;
+  border:
+    1px solid rgba(255,255,255,.05);
+}
+
+/* TOP */
+.boros-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+/* LEFT */
+.boros-kiri{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+/* RANK */
+.boros-rank{
+  width:36px;
+  height:36px;
+  border-radius:10px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:
+    rgba(255,255,255,.08);
+
+  font-size:14px;
+  font-weight:bold;
+
+  color:white;
+}
+
+/* KATEGORI */
+.boros-kategori{
+  font-size:16px;
+  font-weight:600;
+}
+
+/* TOTAL */
+.boros-total{
+  color:#22c55e;
+  font-size:14px;
+  font-weight:bold;
+}
+
+/* BUTTON */
+.boros-btn{
+
+  margin-top:12px;
+
+  width:100%;
+
+  padding:10px;
+
+  border:none;
+
+  border-radius:12px;
+
+  background:
+    rgba(255,255,255,.06);
+
+  color:white;
+
+  font-size:14px;
+
+  transition:.2s;
+}
+
+/* HOVER */
+.boros-btn:hover{
+  background:
+    rgba(255,255,255,.1);
+}
+
+/* CLICK */
+.boros-btn:active{
+  transform:scale(.98);
+}
+
+/* DETAIL */
+.boros-detail{
+  display:none;
+  margin-top:12px;
+}
+
+/* SHOW */
+.boros-detail.show{
+  display:block;
+}
+
+/* DETAIL ITEM */
+.boros-detail-item{
+  padding:10px 0;
+  border-bottom:
+    1px solid rgba(255,255,255,.06);
+
+  font-size:14px;
+
+  line-height:1.5;
+}
+
+/* LAST */
+.boros-detail-item:last-child{
+  border-bottom:none;
+}

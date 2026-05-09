@@ -237,16 +237,65 @@ function customConfirm(message) {
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const item = {
-    ket: ketInput.value,
-    jumlah: parseInt(jumlahInput.value.replace(/\D/g, "")),
-    tipe: tipeSelect.value,
-    kategori: tipeSelect.value === "keluar" ? kategoriSelect.value : "-",
-    owner: tipeSelect.value === "masuk" ? ownerSelect.value : "-",
-    tanggal: tanggalInput.value 
-  ? new Date(tanggalInput.value).toISOString()
-  : new Date().toISOString()
-  };
+const selectedDate =
+  tanggalInput.value;
+
+let finalTanggal;
+
+// kalau user pilih tanggal
+if(selectedDate){
+
+  const now = new Date();
+
+  const [year, month, day] =
+    selectedDate.split("-");
+
+  finalTanggal = new Date(
+
+    year,
+
+    month - 1,
+
+    day,
+
+    now.getHours(),
+
+    now.getMinutes(),
+
+    now.getSeconds()
+
+  ).toISOString();
+
+} else {
+
+  finalTanggal =
+    new Date().toISOString();
+
+}
+
+const item = {
+
+  ket: ketInput.value,
+
+  jumlah: parseInt(
+    jumlahInput.value.replace(/\D/g, "")
+  ),
+
+  tipe: tipeSelect.value,
+
+  kategori:
+    tipeSelect.value === "keluar"
+    ? kategoriSelect.value
+    : "-",
+
+  owner:
+    tipeSelect.value === "masuk"
+    ? ownerSelect.value
+    : "-",
+
+  tanggal: finalTanggal
+
+};
 
   if (!editId) await addData(item);
   else {
@@ -285,234 +334,1155 @@ window.editData = editData;
 let saldoGlobal = 0;
 
 function render() {
+
   tbody.innerHTML = "";
 
   let totalMasukGlobal = 0;
   let totalKeluarGlobal = 0;
+
   let totalMasukBulan = 0;
   let totalKeluarBulan = 0;
 
   let kategoriMap = {};
-  let ownerMap = { sulala: 0, surere: 0 };
+
+  let ownerMap = {
+    sulala: 0,
+    surere: 0
+  };
+
   let bulanMap = {};
 
-  const currentMonth = getMonthKey(currentDate);
-  const list = data.filter(i => cleanDate(i.tanggal) === currentDate);
+  const currentMonth =
+    getMonthKey(currentDate);
+
+  // ==========================
+  // FILTER + SORT
+  // ==========================
+  const list = data
+    .filter(i =>
+      cleanDate(i.tanggal)
+      === currentDate
+    )
+    .sort((a,b)=>
+      new Date(a.tanggal) -
+      new Date(b.tanggal)
+    );
 
   let no = 1;
 
+  // ==========================
+  // HEADER TANGGAL
+  // ==========================
   tbody.innerHTML = `
-    <tr class="date-row" onclick="openDatePicker()">
-      <td colspan="6">
-        <button onclick="event.stopPropagation(); changeDate(-1)"><</button>
-        📅 ${formatTanggalIndo(currentDate)}
-        <button onclick="event.stopPropagation(); changeDate(1)">></button>
 
-        <input type="date" id="datePickerHidden" value="${currentDate}"
-        style="position:fixed; bottom:0; left:0; opacity:0;">
+    <tr
+      class="date-row"
+      onclick="openDatePicker()"
+    >
+
+      <td colspan="7">
+
+        <button
+          onclick="
+            event.stopPropagation();
+            changeDate(-1)
+          "
+        >
+          <
+        </button>
+
+        📅
+        ${formatTanggalIndo(currentDate)}
+
+        <button
+          onclick="
+            event.stopPropagation();
+            changeDate(1)
+          "
+        >
+          >
+        </button>
+
+        <input
+          type="date"
+          id="datePickerHidden"
+          value="${currentDate}"
+
+          style="
+            position:fixed;
+            bottom:0;
+            left:0;
+            opacity:0;
+          "
+        >
+
       </td>
+
     </tr>
+
   `;
 
+  // ==========================
+  // HITUNG TOTAL
+  // ==========================
   data.forEach(item => {
-    const d = new Date(item.tanggal);
-    const itemMonth = getMonthKey(item.tanggal);
 
-    if (item.tipe === "masuk") totalMasukGlobal += item.jumlah;
-    else totalKeluarGlobal += item.jumlah;
+    const d =
+      new Date(item.tanggal);
 
-    if (itemMonth === currentMonth) {
-      if (item.tipe === "masuk") {
-        totalMasukBulan += item.jumlah;
+    const itemMonth =
+      getMonthKey(item.tanggal);
 
-        if (item.owner === "sulala") ownerMap.sulala += item.jumlah;
-        if (item.owner === "surere") ownerMap.surere += item.jumlah;
+    // global
+    if(item.tipe === "masuk"){
+
+      totalMasukGlobal +=
+        item.jumlah;
+
+    } else {
+
+      totalKeluarGlobal +=
+        item.jumlah;
+
+    }
+
+    // bulanan
+    if(itemMonth === currentMonth){
+
+      // pemasukan
+      if(item.tipe === "masuk"){
+
+        totalMasukBulan +=
+          item.jumlah;
+
+        if(item.owner === "sulala"){
+
+          ownerMap.sulala +=
+            item.jumlah;
+
+        }
+
+        if(item.owner === "surere"){
+
+          ownerMap.surere +=
+            item.jumlah;
+
+        }
 
         bulanMap[d.getMonth()] =
-          (bulanMap[d.getMonth()] || 0) + item.jumlah;
+
+          (
+            bulanMap[d.getMonth()]
+            || 0
+          )
+
+          + item.jumlah;
+
       }
 
-      if (item.tipe === "keluar") {
-        totalKeluarBulan += item.jumlah;
+      // pengeluaran
+      if(item.tipe === "keluar"){
+
+        totalKeluarBulan +=
+          item.jumlah;
 
         kategoriMap[item.kategori] =
-          (kategoriMap[item.kategori] || 0) + item.jumlah;
+
+          (
+            kategoriMap[item.kategori]
+            || 0
+          )
+
+          + item.jumlah;
+
       }
+
     }
+
   });
 
+  // ==========================
+  // RENDER TABLE
+  // ==========================
   list.forEach(item => {
+
+    // jam
+    const jam =
+      new Date(item.tanggal)
+      .toLocaleTimeString(
+        "id-ID",
+        {
+          hour:"2-digit",
+          minute:"2-digit"
+        }
+      );
+
     tbody.innerHTML += `
+
       <tr>
-        <td>${no++}</td>
-        <td>${item.ket}</td>
-        <td class="${item.tipe}">${item.tipe}</td>
-        <td>${item.kategori}</td>
-        <td>${formatRupiah(item.jumlah)}</td>
+
         <td>
-          <button onclick="editData('${item.id}')">✏️</button>
-          <button onclick="deleteData('${item.id}')">🗑️</button>
+          ${no++}
         </td>
+
+        <td>
+
+          <div>
+            ${item.ket}
+          </div>
+
+          <small
+            style="
+              opacity:.6;
+              font-size:11px;
+            "
+          >
+            ${jam}
+          </small>
+
+        </td>
+
+<td class="${item.tipe}">
+  ${item.tipe}
+</td>
+
+<td>
+  ${item.owner || "-"}
+</td>
+
+<td>
+  ${item.kategori}
+</td>
+
+        <td>
+          ${formatRupiah(item.jumlah)}
+        </td>
+
+        <td>
+
+          <button
+            onclick="editData('${item.id}')"
+          >
+            ✏️
+          </button>
+
+          <button
+            onclick="deleteData('${item.id}')"
+          >
+            🗑️
+          </button>
+
+        </td>
+
       </tr>
+
     `;
+
   });
 
-  const saldo = totalMasukGlobal - totalKeluarGlobal;
-saldoGlobal = saldo; 
-  totalMasukEl.textContent = formatRupiah(totalMasukBulan);
-  totalKeluarEl.textContent = formatRupiah(totalKeluarBulan);
-  saldoEl.textContent = formatRupiah(saldo);
+  // ==========================
+  // SALDO
+  // ==========================
+  const saldo =
+    totalMasukGlobal -
+    totalKeluarGlobal;
 
-  chart.data.datasets[0].data = [totalMasukBulan, totalKeluarBulan];
+  saldoGlobal = saldo;
+
+  // ==========================
+  // UPDATE UI
+  // ==========================
+  totalMasukEl.textContent =
+    formatRupiah(totalMasukBulan);
+
+  totalKeluarEl.textContent =
+    formatRupiah(totalKeluarBulan);
+
+  saldoEl.textContent =
+    formatRupiah(saldo);
+
+  // ==========================
+  // CHART UTAMA
+  // ==========================
+  chart.data.datasets[0].data = [
+    totalMasukBulan,
+    totalKeluarBulan
+  ];
+
   chart.update();
 
-  kategoriChart.data.labels = Object.keys(kategoriMap);
-  kategoriChart.data.datasets[0].data = Object.values(kategoriMap);
+  // ==========================
+  // KATEGORI CHART
+  // ==========================
+  kategoriChart.data.labels =
+    Object.keys(kategoriMap);
+
+  kategoriChart.data.datasets[0].data =
+    Object.values(kategoriMap);
+
   kategoriChart.data.datasets[0].backgroundColor =
-    generateColors(Object.keys(kategoriMap).length);
+    generateColors(
+      Object.keys(kategoriMap).length
+    );
+
   kategoriChart.update();
 
+  // ==========================
+  // OWNER CHART
+  // ==========================
   ownerChart.data.datasets[0].data = [
+
     ownerMap.sulala,
+
     ownerMap.surere
+
   ];
+
   ownerChart.update();
 
-  const namaBulan = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+  // ==========================
+  // BULAN CHART
+  // ==========================
+  const namaBulan = [
 
-  bulanChart.data.labels = Object.keys(bulanMap).map(i => namaBulan[i]);
-  bulanChart.data.datasets[0].data = Object.values(bulanMap);
+    "Jan","Feb","Mar","Apr",
+
+    "Mei","Jun","Jul","Agu",
+
+    "Sep","Okt","Nov","Des"
+
+  ];
+
+  bulanChart.data.labels =
+
+    Object.keys(bulanMap)
+    .map(i => namaBulan[i]);
+
+  bulanChart.data.datasets[0].data =
+
+    Object.values(bulanMap);
+
   bulanChart.update();
-  
+
+  // ==========================
+  // BOROS
+  // ==========================
   renderBoros();
-  if (typeof updateTabunganUI === "function") {
-  updateTabunganUI();
-}
 
-const saldoGoalEl = document.getElementById("saldoGoalText");
+  // ==========================
+  // TABUNGAN
+  // ==========================
+  if(typeof updateTabunganUI
+    === "function") {
 
-if (saldoGoalEl) {
-  saldoGoalEl.textContent = formatRupiah(saldoGlobal);
-}
+    updateTabunganUI();
+
+  }
+
+  // ==========================
+  // SALDO GOAL
+  // ==========================
+  const saldoGoalEl =
+    document.getElementById(
+      "saldoGoalText"
+    );
+
+  if(saldoGoalEl){
+
+    saldoGoalEl.textContent =
+      formatRupiah(saldoGlobal);
+
+  }
+
 }
 
 // ==========================
-// EXPORT PDF (FINAL FIX)
+// EXPORT PDF + excel (FINAL FIX)
 // ==========================
 window.exportPDF = function () {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF("p", "mm", "a4");
 
-  const currentMonth = getMonthKey(currentDate);
+  const { jsPDF } = window.jspdf;
+
+  const doc =
+    new jsPDF("p", "mm", "a4");
+
+  const currentMonth =
+    getMonthKey(currentDate);
 
   // ==========================
-  // FILTER + SORT (FIX URUT TANGGAL)
+  // FILTER + SORT
   // ==========================
   const list = data
-    .filter(item => getMonthKey(item.tanggal) === currentMonth)
-    .sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal)); 
-    // ↑ ASC (lama → baru)
-    // kalau mau baru ke lama: balik jadi b - a
+    .filter(item =>
+      getMonthKey(item.tanggal)
+      === currentMonth
+    )
+    .sort((a,b)=>
+      new Date(a.tanggal) -
+      new Date(b.tanggal)
+    );
 
+  // ==========================
+  // TOTAL
+  // ==========================
   let totalMasuk = 0;
   let totalKeluar = 0;
 
   list.forEach(item => {
-    if (item.tipe === "masuk") totalMasuk += item.jumlah;
-    else totalKeluar += item.jumlah;
+
+    if(item.tipe === "masuk"){
+
+      totalMasuk += item.jumlah;
+
+    } else {
+
+      totalKeluar += item.jumlah;
+
+    }
+
   });
 
-  const saldo = totalMasuk - totalKeluar;
+  const saldo =
+    totalMasuk - totalKeluar;
 
   // ==========================
-  // HALAMAN 1 - HEADER + SUMMARY
+  // HEADER
   // ==========================
-  doc.setFontSize(18);
-  doc.text("LAPORAN KEUANGAN", 14, 15);
+  doc.setFillColor(30,41,59);
+
+  doc.rect(
+    0,
+    0,
+    210,
+    35,
+    "F"
+  );
+
+  doc.setTextColor(255);
+
+  doc.setFontSize(22);
+
+  doc.text(
+    "LAPORAN KEUANGAN",
+    14,
+    18
+  );
 
   doc.setFontSize(11);
-  doc.text(`Periode: ${formatBulanTahun(currentDate)}`, 14, 22);
 
-  doc.text(`Pemasukan : ${formatRupiah(totalMasuk)}`, 14, 35);
-  doc.text(`Pengeluaran : ${formatRupiah(totalKeluar)}`, 14, 42);
-  doc.text(`Saldo : ${formatRupiah(saldo)}`, 14, 49);
-
-  // CHART UTAMA
-  try {
-    const img = document.getElementById("myChart").toDataURL("image/png");
-    doc.addImage(img, "PNG", 30, 60, 150, 100);
-  } catch {}
+  doc.text(
+    `Periode: ${formatBulanTahun(currentDate)}`,
+    14,
+    27
+  );
 
   // ==========================
-  // HALAMAN 2 - KATEGORI & OWNER
+  // SUMMARY BOX
   // ==========================
-  doc.addPage();
+  doc.setTextColor(0);
 
-  doc.setFontSize(14);
-  doc.text("Analisis Pengeluaran & Owner", 14, 15);
+  const summaryY = 48;
 
-  try {
-    const kategoriImg = document.getElementById("kategoriChart").toDataURL("image/png");
-    doc.addImage(kategoriImg, "PNG", 15, 25, 80, 80);
-  } catch {}
+  const cards = [
 
-  try {
-    const ownerImg = document.getElementById("ownerChart").toDataURL("image/png");
-    doc.addImage(ownerImg, "PNG", 110, 25, 80, 80);
-  } catch {}
-
-  // ==========================
-  // HALAMAN 3 - TREND
-  // ==========================
-  doc.addPage();
-
-  doc.setFontSize(14);
-  doc.text("Trend Pemasukan", 14, 15);
-
-  try {
-    const bulanImg = document.getElementById("bulanChart").toDataURL("image/png");
-    doc.addImage(bulanImg, "PNG", 15, 30, 180, 100);
-  } catch {}
-
-  // ==========================
-  // HALAMAN 4 - TABLE (SUDAH URUT)
-  // ==========================
-  doc.addPage();
-
-  doc.setFontSize(14);
-  doc.text("Detail Transaksi", 14, 15);
-
-  const body = list.map(item => ([
-    formatTanggalIndo(item.tanggal),   // ← ini tanggal biar jelas
-    item.ket || "-",
-    item.tipe || "-",
-    item.kategori || "-",
-    formatRupiah(item.jumlah || 0)
-  ]));
-
-  doc.autoTable({
-    startY: 20,
-    head: [["Tanggal", "Keterangan", "Tipe", "Kategori", "Jumlah"]],
-    body: body,
-
-    theme: "grid",
-
-    styles: {
-      fontSize: 8,
-      cellPadding: 2
+    {
+      title:"Pemasukan",
+      value:formatRupiah(totalMasuk),
+      color:[34,197,94]
     },
 
-    headStyles: {
-      fillColor: [30, 64, 175],
-      textColor: 255
+    {
+      title:"Pengeluaran",
+      value:formatRupiah(totalKeluar),
+      color:[239,68,68]
     },
 
-    alternateRowStyles: {
-      fillColor: [245, 245, 245]
+    {
+      title:"Saldo",
+      value:formatRupiah(saldo),
+      color:[59,130,246]
     }
+
+  ];
+
+  cards.forEach((c,i)=>{
+
+    const x =
+      14 + (i * 63);
+
+    doc.setFillColor(...c.color);
+
+    doc.roundedRect(
+      x,
+      summaryY,
+      56,
+      28,
+      4,
+      4,
+      "F"
+    );
+
+    doc.setTextColor(255);
+
+    doc.setFontSize(10);
+
+    doc.text(
+      c.title,
+      x + 4,
+      summaryY + 9
+    );
+
+    doc.setFontSize(13);
+
+    doc.text(
+      c.value,
+      x + 4,
+      summaryY + 19
+    );
+
   });
 
-  doc.save(`Laporan-${currentMonth}.pdf`);
+  // ==========================
+  // CHART
+  // ==========================
+  try {
+
+    const chartImg =
+      document
+      .getElementById("myChart")
+      .toDataURL("image/png");
+
+    doc.addImage(
+      chartImg,
+      "PNG",
+      35,
+      88,
+      140,
+      90
+    );
+
+  } catch {}
+
+  // ==========================
+  // HALAMAN 2
+  // ==========================
+  doc.addPage();
+
+  doc.setFontSize(16);
+
+  doc.text(
+    "Analisis Pengeluaran",
+    14,
+    16
+  );
+
+  try {
+
+    const kategoriImg =
+      document
+      .getElementById("kategoriChart")
+      .toDataURL("image/png");
+
+    doc.addImage(
+      kategoriImg,
+      "PNG",
+      12,
+      28,
+      85,
+      85
+    );
+
+  } catch {}
+
+  try {
+
+    const ownerImg =
+      document
+      .getElementById("ownerChart")
+      .toDataURL("image/png");
+
+    doc.addImage(
+      ownerImg,
+      "PNG",
+      108,
+      28,
+      85,
+      85
+    );
+
+  } catch {}
+
+  // ==========================
+  // BOROS
+  // ==========================
+  const kategoriMap = {};
+
+  list.forEach(item => {
+
+    if(item.tipe === "keluar"){
+
+      kategoriMap[item.kategori] =
+        (kategoriMap[item.kategori] || 0)
+        + item.jumlah;
+
+    }
+
+  });
+
+  const borosRank =
+    Object.entries(kategoriMap)
+    .sort((a,b)=>
+      b[1] - a[1]
+    );
+
+  let borosY = 132;
+
+  doc.setFontSize(13);
+
+  doc.text(
+    "Kategori Paling Boros",
+    14,
+    borosY
+  );
+
+  borosY += 10;
+
+  borosRank
+    .slice(0,5)
+    .forEach(([nama,total],i)=>{
+
+      doc.setFontSize(11);
+
+      doc.text(
+        `#${i+1} ${nama}`,
+        18,
+        borosY
+      );
+
+      doc.text(
+        formatRupiah(total),
+        140,
+        borosY
+      );
+
+      borosY += 8;
+
+    });
+
+  // ==========================
+  // HALAMAN 3
+  // ==========================
+  doc.addPage();
+
+  doc.setFontSize(16);
+
+  doc.text(
+    "Trend Pemasukan",
+    14,
+    16
+  );
+
+  try {
+
+    const trendImg =
+      document
+      .getElementById("bulanChart")
+      .toDataURL("image/png");
+
+    doc.addImage(
+      trendImg,
+      "PNG",
+      12,
+      28,
+      185,
+      95
+    );
+
+  } catch {}
+
+  // ==========================
+  // GOALS
+  // ==========================
+  if(typeof goals !== "undefined"){
+
+    let y = 145;
+
+    doc.setFontSize(15);
+
+    doc.text(
+      "Progress Goals",
+      14,
+      y
+    );
+
+    y += 10;
+
+    goals.forEach(goal => {
+
+      const percent =
+        Math.min(
+          (
+            goal.terkumpul /
+            goal.target
+          ) * 100,
+          100
+        );
+
+      // bg
+      doc.setFillColor(230,230,230);
+
+      doc.roundedRect(
+        14,
+        y,
+        160,
+        7,
+        3,
+        3,
+        "F"
+      );
+
+      // fill
+      doc.setFillColor(
+        59,
+        130,
+        246
+      );
+
+      doc.roundedRect(
+        14,
+        y,
+        160 * (percent / 100),
+        7,
+        3,
+        3,
+        "F"
+      );
+
+      doc.setTextColor(0);
+
+      doc.setFontSize(11);
+
+      doc.text(
+        `${goal.nama} (${Math.round(percent)}%)`,
+        14,
+        y - 2
+      );
+
+      doc.text(
+        `${formatRupiah(goal.terkumpul)} / ${formatRupiah(goal.target)}`,
+        14,
+        y + 14
+      );
+
+      y += 28;
+
+    });
+
+  }
+
+  // ==========================
+  // HALAMAN TABLE
+  // ==========================
+  doc.addPage();
+
+  doc.setFontSize(16);
+
+  doc.text(
+    "Detail Transaksi",
+    14,
+    16
+  );
+
+  // ==========================
+  // BODY TABLE
+  // ==========================
+  const body =
+    list.map((item,index) => {
+
+      const tanggal =
+        new Date(item.tanggal);
+
+      const tanggalText =
+        tanggal.toLocaleDateString(
+          "id-ID",
+          {
+            day:"2-digit",
+            month:"2-digit",
+            year:"numeric"
+          }
+        );
+
+      const jamText =
+        tanggal.toLocaleTimeString(
+          "id-ID",
+          {
+            hour:"2-digit",
+            minute:"2-digit"
+          }
+        );
+
+      return [
+
+        index + 1,
+
+        `${tanggalText}\n${jamText}`,
+
+        item.ket || "-",
+
+        item.tipe || "-",
+
+        item.kategori || "-",
+
+        formatRupiah(item.jumlah || 0)
+
+      ];
+
+    });
+
+  // ==========================
+  // TABLE
+  // ==========================
+  doc.autoTable({
+
+    startY: 24,
+
+    head: [[
+      "No",
+      "Tanggal & Jam",
+      "Keterangan",
+      "Tipe",
+      "Kategori",
+      "Jumlah"
+    ]],
+
+    body: body,
+
+    theme:"grid",
+
+    styles:{
+      fontSize:8,
+      cellPadding:2,
+      valign:"middle"
+    },
+
+    headStyles:{
+      fillColor:[30,41,59],
+      textColor:255
+    },
+
+    alternateRowStyles:{
+      fillColor:[245,245,245]
+    },
+
+    columnStyles:{
+
+      0:{ cellWidth:10 },
+
+      1:{ cellWidth:28 },
+
+      2:{ cellWidth:55 },
+
+      3:{ cellWidth:22 },
+
+      4:{ cellWidth:30 },
+
+      5:{ cellWidth:35 }
+
+    }
+
+  });
+
+  // ==========================
+  // SAVE
+  // ==========================
+  doc.save(
+    `Laporan-${currentMonth}.pdf`
+  );
+
+};
+
+
+window.exportExcel = function () {
+
+  const currentMonth =
+    getMonthKey(currentDate);
+
+  // ==========================
+  // FILTER + SORT
+  // ==========================
+  const list = data
+    .filter(item =>
+      getMonthKey(item.tanggal)
+      === currentMonth
+    )
+    .sort((a,b)=>
+      new Date(a.tanggal) -
+      new Date(b.tanggal)
+    );
+
+  // ==========================
+  // TOTAL
+  // ==========================
+  let totalMasuk = 0;
+  let totalKeluar = 0;
+
+  list.forEach(item => {
+
+    if(item.tipe === "masuk"){
+
+      totalMasuk += item.jumlah;
+
+    } else {
+
+      totalKeluar += item.jumlah;
+
+    }
+
+  });
+
+  const saldo =
+    totalMasuk - totalKeluar;
+
+  // ==========================
+  // WORKBOOK
+  // ==========================
+  const wb = XLSX.utils.book_new();
+
+  // ==========================
+  // SHEET SUMMARY
+  // ==========================
+  const summaryData = [
+
+    ["LAPORAN KEUANGAN"],
+    ["Periode", formatBulanTahun(currentDate)],
+    [],
+
+    ["Pemasukan", totalMasuk],
+    ["Pengeluaran", totalKeluar],
+    ["Saldo", saldo]
+
+  ];
+
+  const wsSummary =
+    XLSX.utils.aoa_to_sheet(summaryData);
+
+  wsSummary["!cols"] = [
+    { wch: 20 },
+    { wch: 25 }
+  ];
+
+  XLSX.utils.book_append_sheet(
+    wb,
+    wsSummary,
+    "Summary"
+  );
+
+  // ==========================
+  // SHEET TRANSAKSI
+  // ==========================
+  const transaksiData = [
+
+    [
+      "No",
+      "Tanggal",
+      "Jam",
+      "Keterangan",
+      "Tipe",
+      "Kategori",
+      "Jumlah"
+    ]
+
+  ];
+
+  list.forEach((item,index)=>{
+
+    const tgl =
+      new Date(item.tanggal);
+
+    const tanggal =
+      tgl.toLocaleDateString(
+        "id-ID"
+      );
+
+    const jam =
+      tgl.toLocaleTimeString(
+        "id-ID",
+        {
+          hour:"2-digit",
+          minute:"2-digit"
+        }
+      );
+
+    transaksiData.push([
+
+      index + 1,
+
+      tanggal,
+
+      jam,
+
+      item.ket || "-",
+
+      item.tipe || "-",
+
+      item.kategori || "-",
+
+      item.jumlah || 0
+
+    ]);
+
+  });
+
+  const wsTransaksi =
+    XLSX.utils.aoa_to_sheet(transaksiData);
+
+  wsTransaksi["!cols"] = [
+
+    { wch: 8 },
+    { wch: 15 },
+    { wch: 10 },
+    { wch: 35 },
+    { wch: 12 },
+    { wch: 18 },
+    { wch: 18 }
+
+  ];
+
+  XLSX.utils.book_append_sheet(
+    wb,
+    wsTransaksi,
+    "Transaksi"
+  );
+
+  // ==========================
+  // SHEET BOROS
+  // ==========================
+  const kategoriMap = {};
+
+  list.forEach(item => {
+
+    if(item.tipe === "keluar"){
+
+      kategoriMap[item.kategori] =
+        (kategoriMap[item.kategori] || 0)
+        + item.jumlah;
+
+    }
+
+  });
+
+  const borosRank =
+    Object.entries(kategoriMap)
+    .sort((a,b)=>
+      b[1] - a[1]
+    );
+
+  const borosData = [
+
+    ["Ranking", "Kategori", "Total"]
+
+  ];
+
+  borosRank.forEach((item,index)=>{
+
+    borosData.push([
+
+      "#" + (index + 1),
+
+      item[0],
+
+      item[1]
+
+    ]);
+
+  });
+
+  const wsBoros =
+    XLSX.utils.aoa_to_sheet(borosData);
+
+  wsBoros["!cols"] = [
+
+    { wch: 12 },
+    { wch: 25 },
+    { wch: 20 }
+
+  ];
+
+  XLSX.utils.book_append_sheet(
+    wb,
+    wsBoros,
+    "Boros"
+  );
+
+  // ==========================
+  // SHEET GOALS
+  // ==========================
+  if(typeof goals !== "undefined"){
+
+    const goalsData = [
+
+      [
+        "Nama Goal",
+        "Terkumpul",
+        "Target",
+        "Progress"
+      ]
+
+    ];
+
+    goals.forEach(goal => {
+
+      const percent =
+        Math.min(
+          (
+            goal.terkumpul /
+            goal.target
+          ) * 100,
+          100
+        );
+
+      goalsData.push([
+
+        goal.nama,
+
+        goal.terkumpul,
+
+        goal.target,
+
+        Math.round(percent) + "%"
+
+      ]);
+
+    });
+
+    const wsGoals =
+      XLSX.utils.aoa_to_sheet(goalsData);
+
+    wsGoals["!cols"] = [
+
+      { wch: 30 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 15 }
+
+    ];
+
+    XLSX.utils.book_append_sheet(
+      wb,
+      wsGoals,
+      "Goals"
+    );
+
+  }
+
+  // ==========================
+  // EXPORT
+  // ==========================
+  XLSX.writeFile(
+    wb,
+    `Keuangan-${currentMonth}.xlsx`
+  );
+
 };
 
 // ==========================
@@ -765,34 +1735,137 @@ function analyzeBoros() {
   return sorted;
 }
 
-function renderBoros() {
-  const result = analyzeBoros();
-  const container = document.getElementById("borosList");
-  if (!container) return;
+function renderBoros(){
 
-  let html = "";
+  const borosList =
+    document.getElementById("borosList");
 
-  result.forEach(([kategori, total], i) => {
-    html += `
-      <div class="boros-item">
-        <span>#${i + 1} ${kategori}</span>
-        <b>Rp ${total.toLocaleString("id-ID")}</b>
-      </div>
-    `;
+  if(!borosList) return;
+
+  borosList.innerHTML = "";
+
+  const currentMonth =
+    getMonthKey(currentDate);
+
+  const kategoriMap = {};
+
+  // GROUPING
+  data.forEach(item => {
+
+    if(
+      item.tipe === "keluar" &&
+      getMonthKey(item.tanggal) === currentMonth
+    ){
+
+      if(!kategoriMap[item.kategori]){
+
+        kategoriMap[item.kategori] = {
+          total:0,
+          items:[]
+        };
+
+      }
+
+      kategoriMap[item.kategori].total +=
+        item.jumlah;
+
+      kategoriMap[item.kategori].items.push(item);
+
+    }
+
   });
 
-  container.innerHTML = html;
+  // SORT
+  const sorted =
+    Object.entries(kategoriMap)
+    .sort((a,b)=>
+      b[1].total - a[1].total
+    );
 
-  // 🔥 AUTO HEIGHT CONTROL
-  if (result.length > 5) {
-    container.style.overflowY = "auto";
-    container.style.maxHeight = "100px";
-  } else {
-    container.style.overflowY = "visible";
-    container.style.maxHeight = "none";
+  // EMPTY
+  if(sorted.length === 0){
+
+    borosList.innerHTML =
+      "<p>Belum ada pengeluaran 😄</p>";
+
+    return;
+
   }
+
+  // RENDER
+  sorted.forEach(([kategori,info],index)=>{
+
+    const id =
+      "detail-" + index;
+
+    borosList.innerHTML += `
+
+      <div class="boros-card">
+
+        <div class="boros-top">
+
+          <div class="boros-kiri">
+
+            <div class="boros-rank">
+              #${index + 1}
+            </div>
+
+            <div class="boros-kategori">
+              ${kategori}
+            </div>
+
+          </div>
+
+          <div class="boros-total">
+            ${formatRupiah(info.total)}
+          </div>
+
+        </div>
+
+        <button
+          class="boros-btn"
+          onclick="toggleBoros('${id}')"
+        >
+          Lihat Detail
+        </button>
+
+        <div
+          class="boros-detail"
+          id="${id}"
+        >
+
+          ${info.items.map(item => `
+
+            <div class="boros-detail-item">
+
+              • ${item.ket}
+              —
+              ${formatRupiah(item.jumlah)}
+
+            </div>
+
+          `).join("")}
+
+        </div>
+
+      </div>
+
+    `;
+
+  });
+
 }
 
+function toggleBoros(id){
+
+  const el =
+    document.getElementById(id);
+
+  if(!el) return;
+
+  el.classList.toggle("show");
+
+}
 // ==========================
 // TAGIHAN REALTIME (FINAL)
 // ==========================
@@ -1572,3 +2645,256 @@ window.addEventListener("load", () => {
   startGoalsRealtime();
   initGoalInputFormat();
 });
+
+// ==========================
+// CHART MODE
+// ==========================
+let chartMode = "bulan";
+
+// pagination harian
+let currentPage = 0;
+const perPage = 7;
+
+// ==========================
+// SET CHART MODE
+// ==========================
+window.setChartMode = function(mode){
+
+  chartMode = mode;
+
+  currentPage = 0;
+
+  document
+    .getElementById("btnBulan")
+    ?.classList.remove("active");
+
+  document
+    .getElementById("btnMinggu")
+    ?.classList.remove("active");
+
+  if(mode === "bulan"){
+
+    document
+      .getElementById("btnBulan")
+      ?.classList.add("active");
+
+  } else {
+
+    document
+      .getElementById("btnMinggu")
+      ?.classList.add("active");
+
+  }
+
+  updateIncomeChart();
+
+};
+
+// ==========================
+// PAGE BUTTON
+// ==========================
+window.prevChartPage = function(){
+
+  if(currentPage > 0){
+
+    currentPage--;
+
+    updateIncomeChart();
+
+  }
+
+};
+
+window.nextChartPage = function(){
+
+  currentPage++;
+
+  updateIncomeChart();
+
+};
+
+// ==========================
+// UPDATE CHART
+// ==========================
+function updateIncomeChart(){
+
+  if(!bulanChart) return;
+
+  // ==========================
+  // BULANAN
+  // ==========================
+  if(chartMode === "bulan"){
+
+    const bulanMap = {};
+
+    data.forEach(item => {
+
+      if(item.tipe !== "masuk")
+        return;
+
+      const d =
+        new Date(item.tanggal);
+
+      const month =
+        d.getMonth();
+
+      bulanMap[month] =
+
+        (
+          bulanMap[month]
+          || 0
+        )
+
+        + item.jumlah;
+
+    });
+
+    const namaBulan = [
+
+      "Jan","Feb","Mar","Apr",
+
+      "Mei","Jun","Jul","Agu",
+
+      "Sep","Okt","Nov","Des"
+
+    ];
+
+    bulanChart.data.labels =
+
+      Object.keys(bulanMap)
+      .map(i =>
+        namaBulan[i]
+      );
+
+    bulanChart.data.datasets[0].data =
+
+      Object.values(bulanMap);
+
+    bulanChart.data.datasets[0].label =
+      "Pemasukan Bulanan";
+
+    // hide nav
+    document
+      .getElementById("chartNav")
+      .style.display = "none";
+
+  }
+
+  // ==========================
+  // HARIAN
+  // ==========================
+  else {
+
+    const tanggalMap = {};
+
+    data.forEach(item => {
+
+      if(item.tipe !== "masuk")
+        return;
+
+      const d =
+        new Date(item.tanggal);
+
+      const tanggal =
+
+        String(d.getDate())
+        .padStart(2,"0")
+
+        +
+
+        "-"
+
+        +
+
+        String(d.getMonth()+1)
+        .padStart(2,"0");
+
+      tanggalMap[tanggal] =
+
+        (
+          tanggalMap[tanggal]
+          || 0
+        )
+
+        + item.jumlah;
+
+    });
+
+    // urut tanggal
+    const sortedTanggal =
+
+      Object.keys(tanggalMap)
+      .sort((a,b)=>{
+
+        const [da,ma] =
+          a.split("-");
+
+        const [db,mb] =
+          b.split("-");
+
+        return new Date(2025,ma-1,da)
+          - new Date(2025,mb-1,db);
+
+      });
+
+    // pagination
+    const start =
+      currentPage * perPage;
+
+    const end =
+      start + perPage;
+
+    const pagedTanggal =
+      sortedTanggal.slice(start,end);
+
+    // button state
+    document
+      .getElementById("chartNav")
+      .style.display =
+        sortedTanggal.length > 7
+        ? "flex"
+        : "none";
+
+    document
+      .getElementById("prevChartBtn")
+      .disabled =
+        currentPage === 0;
+
+    document
+      .getElementById("nextChartBtn")
+      .disabled =
+        end >= sortedTanggal.length;
+
+    bulanChart.data.labels =
+      pagedTanggal;
+
+    bulanChart.data.datasets[0].data =
+
+      pagedTanggal.map(
+        t => tanggalMap[t]
+      );
+
+    bulanChart.data.datasets[0].label =
+      "Pemasukan Harian";
+
+  }
+
+  bulanChart.update();
+
+}
+
+// ==========================
+// INIT
+// ==========================
+window.addEventListener(
+  "load",
+  () => {
+
+    document
+      .getElementById("btnBulan")
+      ?.classList.add("active");
+
+    updateIncomeChart();
+
+  }
+);

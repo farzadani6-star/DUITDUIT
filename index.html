@@ -202,14 +202,15 @@
 
   <table>
     <thead>
-      <tr>
-        <th>No</th>
-        <th>Keterangan</th>
-        <th>Tipe</th>
-        <th>Kategori</th>
-        <th>Jumlah</th>
-        <th>Aksi</th>
-      </tr>
+<tr>
+  <th>No</th>
+  <th>Keterangan</th>
+  <th>Tipe</th>
+  <th>Owner</th>
+  <th>Kategori</th>
+  <th>Jumlah</th>
+  <th>Aksi</th>
+</tr>
     </thead>
     <tbody id="tbody"></tbody>
   </table>
@@ -242,11 +243,35 @@
   <h3>📈 Pemasukan</h3>
 
   <div class="chart-toggle">
-    <button onclick="setMode('bulan')" id="btnBulan">Bulanan</button>
-    <button onclick="setMode('minggu')" id="btnMinggu">Mingguan</button>
+<button
+  onclick="setChartMode('bulan')"
+  id="btnBulan"
+>
+  Bulanan
+</button>
+
+<button
+  onclick="setChartMode('minggu')"
+  id="btnMinggu"
+>
+  Mingguan
+</button>
   </div>
 
   <canvas id="bulanChart"></canvas>
+  <div class="chart-nav" id="chartNav" style="display:none;">
+
+  <button id="prevChartBtn"
+    onclick="prevChartPage()">
+    < Sebelumnya
+  </button>
+
+  <button id="nextChartBtn"
+    onclick="nextChartPage()">
+    Selanjutnya >
+  </button>
+
+</div>
 </div>
 <button class="btn-export" onclick="exportPDF()">
   <svg class="icon" viewBox="0 0 24 24" fill="none">
@@ -257,6 +282,34 @@
   </svg>
 
   <span>Export PDF</span>
+</button>
+<button class="btn-export" onclick="exportExcel()">
+
+  <svg
+    class="icon"
+    viewBox="0 0 24 24"
+    fill="none"
+  >
+
+    <path
+      d="M12 3V14M12 14L8 10M12 14L16 10"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+
+    <path
+      d="M4 17V19C4 19.5523 4.44772 20 5 20H19C19.5523 20 20 19.5523 20 19V17"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+    />
+
+  </svg>
+
+  <span>Export Excel</span>
+
 </button>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -325,6 +378,10 @@ window.fb = {
 
 console.log("🔥 Firebase Ready & Realtime Enabled");
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+
 <script src="script.js"></script>
 <div id="toast" class="toast"></div>
 
