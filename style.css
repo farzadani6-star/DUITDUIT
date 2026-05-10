@@ -459,25 +459,33 @@ td button {
 ========================== */
 .toast {
   position: fixed;
-  bottom: 20px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%) scale(0.9);
+
   background: #1e293b;
   color: white;
-  padding: 12px 18px;
-  border-radius: 12px;
-  font-size: 14px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  padding: 14px 22px;
+  border-radius: 14px;
+  font-size: 15px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+
   opacity: 0;
   pointer-events: none;
-  transition: all 0.3s ease;
-  z-index: 9999;
+
+  transition: all 0.25s ease;
+
+  z-index: 99999;
+
+  text-align: center;
+  min-width: 200px;
+  max-width: 80%;
 }
 
 /* SHOW STATE */
 .toast.show {
   opacity: 1;
-  transform: translateX(-50%) translateY(-10px);
+  transform: translate(-50%, -50%) scale(1);
 }
 
 /* SUCCESS */
@@ -494,7 +502,6 @@ td button {
 .toast.info {
   background: linear-gradient(135deg, #3b82f6, #2563eb);
 }
-
 /* ==========================
    CONFIRM MODAL
 ========================== */

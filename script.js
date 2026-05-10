@@ -984,21 +984,53 @@ window.exportPDF = function () {
 
   try {
 
-    const trendImg =
-      document
-      .getElementById("bulanChart")
-      .toDataURL("image/png");
+  const tempCanvas =
+    document.createElement("canvas");
 
-    doc.addImage(
-      trendImg,
-      "PNG",
-      12,
-      28,
-      185,
-      95
-    );
+  tempCanvas.width = 800;
+  tempCanvas.height = 400;
 
-  } catch {}
+  const tempCtx =
+    tempCanvas.getContext("2d");
+
+  new Chart(tempCtx, {
+    type: "bar",
+    data: {
+      labels: bulanChart.data.labels,
+      datasets: bulanChart.data.datasets
+    },
+    options: {
+      responsive: false,
+      animation: false,
+      plugins: {
+        legend: {
+          position: "top"
+        }
+      }
+    }
+  });
+
+  const img =
+    tempCanvas.toDataURL("image/png");
+
+  doc.setFontSize(14);
+
+  doc.text(
+    "📊 Pemasukan Bulanan (Sulala vs Surere)",
+    14,
+    18
+  );
+
+  doc.addImage(
+    img,
+    "PNG",
+    12,
+    25,
+    185,
+    80
+  );
+
+} catch (e) {}
 
   // ==========================
   // GOALS
@@ -2051,11 +2083,6 @@ function setPage(page) {
 }
 window.setPage = setPage;
 
-// tombol tengah
-function openQuickAction() {
-  showToast("Quick Action (nanti bisa: tambah transaksi / belanja)");
-}
-window.openQuickAction = openQuickAction;
 
 let photos = [];
 let latestPhoto = null;
@@ -2506,7 +2533,7 @@ async function tambahGoal() {
   const target = parseInt(raw);
 
   if (!nama || !target) {
-    showToast("Isi semua data!");
+    showToast("Isi lah bosss!!");
     return;
   }
 
@@ -2536,7 +2563,7 @@ async function nabungGoal(id) {
   if (!value || value <= 0) return;
 
   if (value > saldoGlobal) {
-    showToast("Saldo tidak cukup!");
+    showToast("Duitt mana duitt!");
     return;
   }
 
@@ -2658,243 +2685,181 @@ const perPage = 7;
 // ==========================
 // SET CHART MODE
 // ==========================
-window.setChartMode = function(mode){
+window.setChartMode = function (mode) {
 
   chartMode = mode;
-
   currentPage = 0;
 
-  document
-    .getElementById("btnBulan")
-    ?.classList.remove("active");
+  document.getElementById("btnBulan")?.classList.remove("active");
+  document.getElementById("btnMinggu")?.classList.remove("active");
 
-  document
-    .getElementById("btnMinggu")
-    ?.classList.remove("active");
-
-  if(mode === "bulan"){
-
-    document
-      .getElementById("btnBulan")
-      ?.classList.add("active");
-
+  if (mode === "bulan") {
+    document.getElementById("btnBulan")?.classList.add("active");
   } else {
-
-    document
-      .getElementById("btnMinggu")
-      ?.classList.add("active");
-
+    document.getElementById("btnMinggu")?.classList.add("active");
   }
 
   updateIncomeChart();
-
 };
 
 // ==========================
 // PAGE BUTTON
 // ==========================
-window.prevChartPage = function(){
-
-  if(currentPage > 0){
-
+window.prevChartPage = function () {
+  if (currentPage > 0) {
     currentPage--;
-
     updateIncomeChart();
-
   }
-
 };
 
-window.nextChartPage = function(){
-
+window.nextChartPage = function () {
   currentPage++;
-
   updateIncomeChart();
-
 };
 
 // ==========================
 // UPDATE CHART
 // ==========================
-function updateIncomeChart(){
+function updateIncomeChart() {
 
-  if(!bulanChart) return;
+  if (!bulanChart) return;
+
+  const namaBulan = [
+    "Jan","Feb","Mar","Apr",
+    "Mei","Jun","Jul","Agu",
+    "Sep","Okt","Nov","Des"
+  ];
 
   // ==========================
-  // BULANAN
+  // BULAN MODE
   // ==========================
-  if(chartMode === "bulan"){
+  if (chartMode === "bulan") {
 
-    const bulanMap = {};
+    const sulalaMap = {};
+    const surereMap = {};
 
     data.forEach(item => {
 
-      if(item.tipe !== "masuk")
-        return;
+      if (item.tipe !== "masuk") return;
 
-      const d =
-        new Date(item.tanggal);
+      const d = new Date(item.tanggal);
+      const month = d.getMonth();
 
-      const month =
-        d.getMonth();
+      if (item.owner === "sulala") {
+        sulalaMap[month] =
+          (sulalaMap[month] || 0) + item.jumlah;
+      }
 
-      bulanMap[month] =
-
-        (
-          bulanMap[month]
-          || 0
-        )
-
-        + item.jumlah;
+      if (item.owner === "surere") {
+        surereMap[month] =
+          (surereMap[month] || 0) + item.jumlah;
+      }
 
     });
 
-    const namaBulan = [
-
-      "Jan","Feb","Mar","Apr",
-
-      "Mei","Jun","Jul","Agu",
-
-      "Sep","Okt","Nov","Des"
-
-    ];
+    const allKeys = Array.from(
+      new Set([
+        ...Object.keys(sulalaMap),
+        ...Object.keys(surereMap)
+      ])
+    ).sort((a, b) => a - b);
 
     bulanChart.data.labels =
+      allKeys.map(i => namaBulan[i]);
 
-      Object.keys(bulanMap)
-      .map(i =>
-        namaBulan[i]
-      );
+    bulanChart.data.datasets = [
+      {
+        label: "Pemasukan Sulala",
+        data: allKeys.map(i => sulalaMap[i] || 0)
+      },
+      {
+        label: "Pemasukan Surere",
+        data: allKeys.map(i => surereMap[i] || 0)
+      }
+    ];
 
-    bulanChart.data.datasets[0].data =
-
-      Object.values(bulanMap);
-
-    bulanChart.data.datasets[0].label =
-      "Pemasukan Bulanan";
-
-    // hide nav
-    document
-      .getElementById("chartNav")
-      .style.display = "none";
-
+    document.getElementById("chartNav").style.display = "none";
   }
 
   // ==========================
-  // HARIAN
+  // HARIAN MODE
   // ==========================
   else {
 
-    const tanggalMap = {};
+    const sulalaMap = {};
+    const surereMap = {};
 
     data.forEach(item => {
 
-      if(item.tipe !== "masuk")
-        return;
+      if (item.tipe !== "masuk") return;
 
-      const d =
-        new Date(item.tanggal);
+      const d = new Date(item.tanggal);
 
       const tanggal =
+        String(d.getDate()).padStart(2, "0") +
+        "-" +
+        String(d.getMonth() + 1).padStart(2, "0");
 
-        String(d.getDate())
-        .padStart(2,"0")
+      if (item.owner === "sulala") {
+        sulalaMap[tanggal] =
+          (sulalaMap[tanggal] || 0) + item.jumlah;
+      }
 
-        +
-
-        "-"
-
-        +
-
-        String(d.getMonth()+1)
-        .padStart(2,"0");
-
-      tanggalMap[tanggal] =
-
-        (
-          tanggalMap[tanggal]
-          || 0
-        )
-
-        + item.jumlah;
+      if (item.owner === "surere") {
+        surereMap[tanggal] =
+          (surereMap[tanggal] || 0) + item.jumlah;
+      }
 
     });
 
-    // urut tanggal
-    const sortedTanggal =
+    const allTanggal = [
+      ...Object.keys(sulalaMap),
+      ...Object.keys(surereMap)
+    ].filter((v, i, a) => a.indexOf(v) === i)
+     .sort((a, b) => {
 
-      Object.keys(tanggalMap)
-      .sort((a,b)=>{
+      const [da, ma] = a.split("-");
+      const [db, mb] = b.split("-");
 
-        const [da,ma] =
-          a.split("-");
+      return new Date(2025, ma - 1, da)
+        - new Date(2025, mb - 1, db);
 
-        const [db,mb] =
-          b.split("-");
+    });
 
-        return new Date(2025,ma-1,da)
-          - new Date(2025,mb-1,db);
+    const start = currentPage * perPage;
+    const end = start + perPage;
+    const paged = allTanggal.slice(start, end);
 
-      });
+    document.getElementById("chartNav").style.display =
+      allTanggal.length > 7 ? "flex" : "none";
 
-    // pagination
-    const start =
-      currentPage * perPage;
+    document.getElementById("prevChartBtn").disabled =
+      currentPage === 0;
 
-    const end =
-      start + perPage;
+    document.getElementById("nextChartBtn").disabled =
+      end >= allTanggal.length;
 
-    const pagedTanggal =
-      sortedTanggal.slice(start,end);
+    bulanChart.data.labels = paged;
 
-    // button state
-    document
-      .getElementById("chartNav")
-      .style.display =
-        sortedTanggal.length > 7
-        ? "flex"
-        : "none";
-
-    document
-      .getElementById("prevChartBtn")
-      .disabled =
-        currentPage === 0;
-
-    document
-      .getElementById("nextChartBtn")
-      .disabled =
-        end >= sortedTanggal.length;
-
-    bulanChart.data.labels =
-      pagedTanggal;
-
-    bulanChart.data.datasets[0].data =
-
-      pagedTanggal.map(
-        t => tanggalMap[t]
-      );
-
-    bulanChart.data.datasets[0].label =
-      "Pemasukan Harian";
-
+    bulanChart.data.datasets = [
+      {
+        label: "Pemasukan Sulala",
+        data: paged.map(t => sulalaMap[t] || 0)
+      },
+      {
+        label: "Pemasukan Surere",
+        data: paged.map(t => surereMap[t] || 0)
+      }
+    ];
   }
 
   bulanChart.update();
-
 }
 
 // ==========================
 // INIT
 // ==========================
-window.addEventListener(
-  "load",
-  () => {
-
-    document
-      .getElementById("btnBulan")
-      ?.classList.add("active");
-
-    updateIncomeChart();
-
-  }
-);
+window.addEventListener("load", () => {
+  document.getElementById("btnBulan")?.classList.add("active");
+  updateIncomeChart();
+});
