@@ -140,7 +140,49 @@ const bulanChart = new Chart(document.getElementById("bulanChart"), {
     }]
   }
 });
+window.addEventListener(
+  "load",
+  () => {
 
+    const tabunganJumlahInput =
+
+      document.getElementById(
+        "tabunganJumlah"
+      );
+
+    if(!tabunganJumlahInput)
+      return;
+
+    tabunganJumlahInput
+      .addEventListener(
+        "input",
+        (e) => {
+
+          let value =
+
+            e.target.value
+            .replace(/\D/g,"");
+
+          if(!value){
+
+            e.target.value = "";
+
+            return;
+
+          }
+
+          e.target.value =
+
+            Number(value)
+            .toLocaleString(
+              "id-ID"
+            );
+
+        }
+      );
+
+  }
+);
 // ==========================
 // COLORS
 // ==========================
@@ -177,6 +219,40 @@ fb.onSnapshot(fb.collection(db, "transaksi"), (snap) => {
 
   render();
 });
+
+// ==========================
+// REALTIME TABUNGAN
+// ==========================
+fb.onSnapshot(
+
+  fb.collection(
+    db,
+    "tabungan"
+  ),
+
+  (snapshot) => {
+
+    tabunganData =
+
+      snapshot.docs.map(doc => ({
+
+        id:doc.id,
+
+        ...doc.data()
+
+      }));
+
+    // delay dikit biar DOM ready
+    setTimeout(() => {
+
+      renderTabungan();
+
+    },100);
+
+  }
+
+);
+
 }
 
 // ==========================
@@ -2863,3 +2939,799 @@ window.addEventListener("load", () => {
   document.getElementById("btnBulan")?.classList.add("active");
   updateIncomeChart();
 });
+
+
+
+
+// ==========================
+// DATA TABUNGAN
+// ==========================
+let tabunganData = [];
+
+// ==========================
+// OPEN PAGE
+// ==========================
+function openTabunganPage(){
+
+  const page =
+    document.getElementById(
+      "tabunganPage"
+    );
+
+  if(page){
+
+    page.style.display =
+      "block";
+
+  }
+
+}
+
+// ==========================
+// CLOSE PAGE
+// ==========================
+function closeTabunganPage(){
+
+  const page =
+    document.getElementById(
+      "tabunganPage"
+    );
+
+  if(page){
+
+    page.style.display =
+      "none";
+
+  }
+
+}
+
+// ==========================
+// TOGGLE WALLET
+// ==========================
+function toggleWallet(id){
+
+  const wallet =
+    document.getElementById(id);
+
+  if(!wallet) return;
+
+  // ==========================
+  // TUTUP
+  // ==========================
+  if(
+    wallet.classList.contains(
+      "open"
+    )
+  ){
+
+    wallet.style.maxHeight =
+      "0px";
+
+    wallet.style.opacity =
+      "0";
+
+    wallet.classList.remove(
+      "open"
+    );
+
+  }
+
+  // ==========================
+  // BUKA
+  // ==========================
+  else {
+
+    wallet.classList.add(
+      "open"
+    );
+
+    wallet.style.maxHeight =
+
+      wallet.scrollHeight
+      + "px";
+
+    wallet.style.opacity =
+      "1";
+
+  }
+
+}
+
+// ==========================
+// FORMAT INPUT TABUNGAN
+// ==========================
+window.addEventListener(
+  "load",
+  () => {
+
+    const input =
+
+      document.getElementById(
+        "tabunganJumlah"
+      );
+
+    if(!input) return;
+
+    input.addEventListener(
+      "input",
+      (e) => {
+
+        let value =
+
+          e.target.value
+          .replace(/\D/g,"");
+
+        if(!value){
+
+          e.target.value =
+            "";
+
+          return;
+
+        }
+
+        e.target.value =
+
+          Number(value)
+          .toLocaleString(
+            "id-ID"
+          );
+
+      }
+    );
+
+  }
+);
+
+// ==========================
+// SAVE TABUNGAN
+// ==========================
+async function saveTabungan(){
+
+  const owner =
+
+    document
+      .getElementById(
+        "tabunganOwner"
+      )
+      .value;
+
+  const jumlah =
+
+    parseInt(
+
+      document
+        .getElementById(
+          "tabunganJumlah"
+        )
+        .value
+
+        .replace(/\D/g,"")
+
+    );
+
+  const file =
+
+    document
+      .getElementById(
+        "tabunganFoto"
+      )
+      .files[0];
+
+  // ==========================
+  // VALIDASI
+  // ==========================
+  if(!jumlah || jumlah <= 0){
+
+    showToast(
+      "Nabung berapaa kaunii "
+    );
+
+    return;
+
+  }
+
+  if(!file){
+
+    showToast(
+      "No bukti HOAXXX"
+    );
+
+    return;
+
+  }
+
+  // ==========================
+  // LOADING
+  // ==========================
+  showToast(
+    "SABAR ..."
+  );
+
+  // ==========================
+  // READER FOTO
+  // ==========================
+// ==========================
+// COMPRESS FOTO
+// ==========================
+const compressedFoto =
+
+  await compressImageSmart(
+    file,
+    400
+  );
+
+try{
+
+  const item = {
+
+    owner,
+
+    jumlah,
+
+    foto:
+      compressedFoto,
+
+    tanggal:
+      new Date()
+      .toISOString()
+
+  };
+
+  // ==========================
+  // SAVE FIRESTORE
+  // ==========================
+  await fb.addDoc(
+
+    fb.collection(
+      db,
+      "tabungan"
+    ),
+
+    item
+
+  );
+
+  // ==========================
+  // MASUK PENGELUARAN
+  // ==========================
+  if(
+    typeof addData
+    === "function"
+  ){
+
+    await addData({
+
+      ket:
+        "Menabung "
+        + owner,
+
+      jumlah,
+
+      tipe:
+        "keluar",
+
+      kategori:
+        "Tabungan",
+
+      owner:
+        "-",
+
+      tanggal:
+        new Date()
+        .toISOString()
+
+    });
+
+  }
+
+  // ==========================
+  // RESET
+  // ==========================
+  document
+    .getElementById(
+      "tabunganJumlah"
+    )
+    .value = "";
+
+  document
+    .getElementById(
+      "tabunganFoto"
+    )
+    .value = "";
+
+  showToast(
+    "Masukk tabunganmu!"
+  );
+
+}
+
+catch(err){
+
+  console.error(err);
+
+  showToast(
+    "Gagal upload 😭"
+  );
+
+}
+
+  reader.readAsDataURL(file);
+
+}
+
+// ==========================
+// RENDER TABUNGAN
+// ==========================
+function renderTabungan(){
+
+  const sulalaWallet =
+
+    document.getElementById(
+      "walletSulala"
+    );
+
+  const surereWallet =
+
+    document.getElementById(
+      "walletSurere"
+    );
+
+  if(
+    !sulalaWallet
+    || !surereWallet
+  ) return;
+
+  // ==========================
+  // RESET
+  // ==========================
+  sulalaWallet.innerHTML =
+    "";
+
+  surereWallet.innerHTML =
+    "";
+
+  let totalSulala = 0;
+  let totalSurere = 0;
+
+  // ==========================
+  // SORT TERBARU
+  // ==========================
+  const sorted =
+
+    [...tabunganData]
+
+    .sort((a,b)=>
+
+      new Date(b.tanggal)
+
+      -
+
+      new Date(a.tanggal)
+
+    );
+
+  // ==========================
+  // LOOP
+  // ==========================
+  sorted.forEach(item => {
+
+    const tanggal =
+
+      new Date(
+        item.tanggal
+      )
+
+      .toLocaleString(
+        "id-ID"
+      );
+
+    const html = `
+
+      <div class="wallet-item">
+
+        <img
+
+          src="${item.foto}"
+
+          onclick="
+            event.stopPropagation();
+            openImageModal(
+              '${item.foto}'
+            )
+          "
+
+        >
+
+        <div class="wallet-info">
+
+          <h4>
+            ${formatRupiah(
+              item.jumlah
+            )}
+          </h4>
+
+          <p>
+            ${tanggal}
+          </p>
+<button
+  class="delete-tabungan-btn"
+
+  onclick="
+    event.stopPropagation();
+    deleteTabungan('${item.id}')
+  "
+>
+  Hapus
+</button>
+        </div>
+
+      </div>
+
+    `;
+
+    // ==========================
+    // SULALA
+    // ==========================
+    if(
+      item.owner
+      === "sulala"
+    ){
+
+      totalSulala +=
+        item.jumlah;
+
+      sulalaWallet.innerHTML +=
+        html;
+
+    }
+
+    // ==========================
+    // SURERE
+    // ==========================
+    if(
+      item.owner
+      === "surere"
+    ){
+
+      totalSurere +=
+        item.jumlah;
+
+      surereWallet.innerHTML +=
+        html;
+
+    }
+
+  });
+
+  // ==========================
+  // TOTAL
+  // ==========================
+  document
+    .getElementById(
+      "totalSulala"
+    )
+    .textContent =
+
+      formatRupiah(
+        totalSulala
+      );
+
+  document
+    .getElementById(
+      "totalSurere"
+    )
+    .textContent =
+
+      formatRupiah(
+        totalSurere
+      );
+
+}
+
+// ==========================
+// OPEN IMAGE
+// ==========================
+function openImageModal(src){
+
+  const modal =
+
+    document.getElementById(
+      "imageModal"
+    );
+
+  const img =
+
+    document.getElementById(
+      "modalImage"
+    );
+
+  if(!modal || !img)
+    return;
+
+  img.src = src;
+
+  modal.style.display =
+    "flex";
+
+}
+
+// ==========================
+// CLOSE IMAGE
+// ==========================
+function closeImageModal(){
+
+  const modal =
+
+    document.getElementById(
+      "imageModal"
+    );
+
+  if(modal){
+
+    modal.style.display =
+      "none";
+
+  }
+
+}
+
+// ==========================
+// DELETE TABUNGAN
+// ==========================
+async function deleteTabungan(id){
+
+  const yakin =
+    await customConfirm(
+      "Hapus tabungan ini?"
+    );
+
+  if(!yakin) return;
+
+  try{
+
+    await fb.deleteDoc(
+
+      fb.doc(
+        db,
+        "tabungan",
+        id
+      )
+
+    );
+
+    showToast(
+      "Dah Terhaposss"
+    );
+
+  }
+
+  catch(err){
+
+    console.error(err);
+
+    showToast(
+      "Tak bisee "
+    );
+
+  }
+
+}
+
+let ambilOwner = "";
+
+// ==========================
+// OPEN POPUP
+// ==========================
+function openAmbilPopup(owner){
+
+  ambilOwner = owner;
+
+  document
+    .getElementById(
+      "ambilPopup"
+    )
+    .style.display = "flex";
+
+}
+
+// ==========================
+// CLOSE POPUP
+// ==========================
+function closeAmbilPopup(){
+
+  document
+    .getElementById(
+      "ambilPopup"
+    )
+    .style.display = "none";
+
+}
+
+// ==========================
+// CONFIRM AMBIL
+// ==========================
+async function confirmAmbil(){
+
+  const jumlah = parseInt(
+
+    document
+      .getElementById(
+        "ambilJumlah"
+      )
+      .value
+
+      .replace(/\D/g,"")
+
+  );
+
+  if(!jumlah){
+
+    showToast(
+      "Isi nominal 😭"
+    );
+
+    return;
+
+  }
+
+  // ==========================
+  // FILTER TABUNGAN OWNER
+  // ==========================
+  const ownerData =
+
+    tabunganData.filter(i =>
+
+      i.owner === ambilOwner
+
+    );
+
+  // ==========================
+  // TOTAL TABUNGAN
+  // ==========================
+  const total = ownerData
+    .reduce((a,b)=>
+
+      a + b.jumlah
+
+    ,0);
+
+  // ==========================
+  // VALIDASI
+  // ==========================
+  if(jumlah > total){
+
+    showToast(
+      "Tabungan tidak cukup 😭"
+    );
+
+    return;
+
+  }
+
+  try{
+
+    // ==========================
+    // MASUK PEMASUKAN
+    // ==========================
+    await addData({
+
+      ket:
+        "Ambil Tabungan "
+        + ambilOwner,
+
+      jumlah,
+
+      tipe:
+        "masuk",
+
+      kategori:
+        "-",
+
+      owner:
+        ambilOwner,
+
+      tanggal:
+        new Date()
+        .toISOString()
+
+    });
+
+    // ==========================
+    // KURANGI TABUNGAN
+    // ==========================
+    let sisa =
+      jumlah;
+
+    // terbaru dulu
+    const sorted =
+
+      [...ownerData]
+
+      .sort((a,b)=>
+
+        new Date(b.tanggal)
+
+        -
+
+        new Date(a.tanggal)
+
+      );
+
+    for(const item of sorted){
+
+      if(sisa <= 0)
+        break;
+
+      // hapus full
+      if(item.jumlah <= sisa){
+
+        sisa -= item.jumlah;
+
+        await fb.deleteDoc(
+
+          fb.doc(
+            db,
+            "tabungan",
+            item.id
+          )
+
+        );
+
+      }
+
+      // kurangi sebagian
+      else {
+
+        await fb.updateDoc(
+
+          fb.doc(
+            db,
+            "tabungan",
+            item.id
+          ),
+
+          {
+
+            jumlah:
+              item.jumlah - sisa
+
+          }
+
+        );
+
+        sisa = 0;
+
+      }
+
+    }
+
+    // ==========================
+    // RESET
+    // ==========================
+    document
+      .getElementById(
+        "ambilJumlah"
+      )
+      .value = "";
+
+    closeAmbilPopup();
+
+    showToast(
+      "💸 Berhasil ambil tabungan!"
+    );
+
+  }
+
+  catch(err){
+
+    console.error(err);
+
+    showToast(
+      "Gagal ambil 😭"
+    );
+
+  }
+
+}

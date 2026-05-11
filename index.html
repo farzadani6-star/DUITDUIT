@@ -193,10 +193,20 @@
       <option>Telekomunikasi</option>
       <option>Kos</option>
       <option>Utang</option>
+      <option>Tabungan</option>
     </select>
 
     <button type="submit">Tambah</button>
+     <div>
+  <button
+  class="tabungan-page-btn"
+  onclick="openTabunganPage()"
+>
+  💰 Tabungan Pribadi
+</button>
+</div> 
   </form>
+
   <!-- ================= TABEL ================= -->
   <div class="table-wrapper">
 
@@ -424,6 +434,199 @@ console.log("🔥 Firebase Ready & Realtime Enabled");
       <path d="M3 13h4v8H3v-8zm7-6h4v14h-4V7zm7 3h4v11h-4V10z"/>
     </svg>
     <p>Laporan</p>
+  </div>
+
+</div>
+
+<!-- ========================== -->
+<!-- PAGE TABUNGAN -->
+<!-- ========================== -->
+<div class="tabungan-page" id="tabunganPage">
+
+  <div class="tabungan-topbar">
+
+    <button onclick="closeTabunganPage()">
+      Kembali
+    </button>
+
+    <h2>💰 Tabungan Pribadi</h2>
+
+  </div>
+
+  <!-- FORM -->
+  <div class="tabungan-form-box">
+
+    <select id="tabunganOwner">
+
+      <option value="sulala">
+        👛 Sulala
+      </option>
+
+      <option value="surere">
+        👝 Surere
+      </option>
+
+    </select>
+
+<input
+  type="text"
+  id="tabunganJumlah"
+  placeholder="Jumlah Tabungan"
+  inputmode="numeric"
+>
+
+<input
+  type="file"
+  id="tabunganFoto"
+  accept="image/*"
+
+>
+
+    <button onclick="saveTabungan()">
+      Simpan Tabungan
+    </button>
+
+  </div>
+
+  <!-- DOMPET SULALA -->
+  <div class="wallet-card sulala">
+
+    <div
+      class="wallet-header"
+      onclick="toggleWallet('walletSulala')"
+    >
+
+<div>
+
+  <h3>👛 Dompet Sulala</h3>
+
+  <div class="wallet-top">
+
+    <small id="totalSulala">
+      Rp0
+    </small>
+
+
+
+  </div>
+
+</div>
+
+      <span>▼</span>
+    <button
+      class="ambil-btn"
+
+      onclick="
+        event.stopPropagation();
+        openAmbilPopup('sulala')
+      "
+    >
+      Ambil
+    </button>
+    </div>
+
+    <div
+      class="wallet-body"
+      id="walletSulala"
+    ></div>
+
+  </div>
+
+  <!-- DOMPET SURERE -->
+  <div class="wallet-card surere">
+
+    <div
+      class="wallet-header"
+      onclick="toggleWallet('walletSurere')"
+    >
+
+<div>
+
+  <h3>👝 Dompet Surere</h3>
+
+  <div class="wallet-top">
+
+    <small id="totalSurere">
+      Rp0
+    </small>
+
+
+
+  </div>
+
+</div>
+
+      <span>▼</span>
+    <button
+      class="ambil-btn"
+
+      onclick="
+        event.stopPropagation();
+        openAmbilPopup('surere')
+      "
+    >
+      Ambil
+    </button>
+    </div>
+
+    <div
+      class="wallet-body"
+      id="walletSurere"
+    ></div>
+
+  </div>
+
+</div>
+
+<!-- ========================== -->
+<!-- IMAGE VIEWER -->
+<!-- ========================== -->
+<div
+  class="image-modal"
+  id="imageModal"
+  onclick="closeImageModal()"
+>
+
+  <img
+    id="modalImage"
+  >
+
+</div>
+
+<div
+  class="popup-bg"
+  id="ambilPopup"
+>
+
+  <div class="popup-box">
+
+    <h3>
+      💸 Ambil Tabungan
+    </h3>
+
+    <input
+      type="text"
+      id="ambilJumlah"
+      placeholder="Nominal"
+      inputmode="numeric"
+    >
+
+    <div class="popup-actions">
+
+      <button
+        onclick="confirmAmbil()"
+      >
+        Yakin
+      </button>
+
+      <button
+        onclick="closeAmbilPopup()"
+      >
+        Tidak
+      </button>
+
+    </div>
+
   </div>
 
 </div>
