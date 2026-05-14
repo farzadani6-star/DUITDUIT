@@ -19,6 +19,85 @@
 </head>
 <body>
 
+<!-- Div Pembungkus + SVG Penguin -->
+<!-- HTML + SVG PENGUIN -->
+ <div class="container-penguin">
+   
+   <a href="game.html" class="floating-penguin">
+     <svg id="penguin" width="90" height="90" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+       <!-- Badan Utama -->
+       <circle cx="60" cy="60" r="55" fill="#64C8F0" />
+       
+       <!-- Muka Putih -->
+       <ellipse cx="60" cy="65" rx="42" ry="38" fill="#FFFFFF" />
+       
+       <!-- Pipi Merah Transparan -->
+       <ellipse cx="35" cy="70" rx="12" ry="9" fill="#F888A2" opacity="0.25" />
+       <ellipse cx="85" cy="70" rx="12" ry="9" fill="#F888A2" opacity="0.25" />
+       
+       <!-- Paruh Oranye -->
+       <ellipse cx="60" cy="72" rx="18" ry="14" fill="#FF9A3C" />
+       
+       <!-- MATA MELEK DUA-DUANYA -->
+<ellipse
+  id="mataKiri"
+
+  cx="42"
+  cy="50"
+
+  rx="6"
+  ry="6"
+
+  fill="#000"
+/>
+
+
+       <circle cx="40" cy="48" r="2" fill="#FFFFFF" /> <!-- Kilat mata kiri -->
+       
+<ellipse
+  id="mataKanan"
+
+  cx="78"
+  cy="50"
+
+  rx="6"
+  ry="6"
+
+  fill="#000"
+/>
+       <circle cx="76" cy="48" r="2" fill="#FFFFFF" /> <!-- Kilat mata kanan -->
+       <!-- MULUT SENYUM AWAL (WAJIB ADA ID!) -->
+<path
+  id="mulut"
+
+  d="M52 74 Q60 79 68 74"
+
+  stroke="#8B4A1F"
+
+  stroke-width="2.5"
+
+  fill="none"
+
+  stroke-linecap="round"
+/>
+       
+       <!-- Tangan & Kaki -->
+       <ellipse cx="20" cy="75" rx="8" ry="14" fill="#64C8F0" stroke="#4FA7CC"
+
+  stroke-width="1"/>
+       <ellipse cx="100" cy="75" rx="8" ry="14" fill="#64C8F0" stroke="#4FA7CC"
+
+  stroke-width="1"/>
+       <ellipse cx="40" cy="105" rx="7" ry="9" fill="#64C8F0" stroke="#4FA7CC"
+
+  stroke-width="1"/>
+       <ellipse cx="80" cy="105" rx="7" ry="9" fill="#64C8F0" stroke="#4FA7CC"
+
+  stroke-width="1"/>
+     </svg>
+   </a>
+ </div>
+
 
 
 
@@ -33,7 +112,7 @@
 
     <!-- SVG ORNAMENT ATAS -->
     <svg class="header-decor" viewBox="0 0 200 40">
-      <path d="M0,20 Q50,0 100,20 T200,20" stroke="#ff9ac2" fill="none" stroke-width="2"/>
+      <path d="M0,20 Q50,0 100,20 T200,20" stroke="#ff9ac2" fill="none" stroke-width="1"/>
       <circle cx="100" cy="20" r="3" fill="#ff9ac2"/>
     </svg>
 
@@ -42,7 +121,7 @@
 
     <!-- SVG ORNAMENT BAWAH -->
     <svg class="header-decor" viewBox="0 0 200 40">
-      <path d="M0,20 Q50,40 100,20 T200,20" stroke="#ffc1da" fill="none" stroke-width="2"/>
+      <path d="M0,20 Q50,40 100,20 T200,20" stroke="#ffc1da" fill="none" stroke-width="1"/>
     </svg>
 
   </div>
@@ -290,9 +369,9 @@
 <button class="btn-export" onclick="exportPDF()">
   <svg class="icon" viewBox="0 0 24 24" fill="none">
     <path d="M12 3V14M12 14L8 10M12 14L16 10" 
-      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M4 17V19C4 19.5523 4.44772 20 5 20H19C19.5523 20 20 19.5523 20 19V17" 
-      stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
   </svg>
 
   <span>Export PDF</span>
@@ -308,7 +387,7 @@
     <path
       d="M12 3V14M12 14L8 10M12 14L16 10"
       stroke="currentColor"
-      stroke-width="2"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
@@ -316,7 +395,7 @@
     <path
       d="M4 17V19C4 19.5523 4.44772 20 5 20H19C19.5523 20 20 19.5523 20 19V17"
       stroke="currentColor"
-      stroke-width="2"
+      stroke-width="1"
       stroke-linecap="round"
     />
 
@@ -349,6 +428,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 import {
+
   getFirestore,
   collection,
   addDoc,
@@ -356,8 +436,12 @@ import {
   deleteDoc,
   doc,
   updateDoc,
+  setDoc,
   onSnapshot
-} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+}
+from
+"https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBeubIUWKxtxShvHiQ9U7EKLDOWQanl3cw",
@@ -381,13 +465,23 @@ const db = getFirestore(app);
 window.db = db;
 
 window.fb = {
+
   collection,
+
   addDoc,
+
   getDocs,
+
   deleteDoc,
+
   doc,
+
   updateDoc,
-  onSnapshot // 🔥 penting untuk realtime
+
+  setDoc,
+
+  onSnapshot
+
 };
 
 console.log("🔥 Firebase Ready & Realtime Enabled");
@@ -416,7 +510,7 @@ console.log("🔥 Firebase Ready & Realtime Enabled");
     <p>Belanja</p>
   </div>
   <div class="nav-center" onclick="openUpload()">
-<svg viewBox="0 0 24 24" class="icon-center" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<svg viewBox="0 0 24 24" class="icon-center" fill="none" stroke="white" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
   <path d="M4 7h3l2-2h6l2 2h3v12H4z"></path>
   <circle cx="12" cy="13" r="3"></circle>
 </svg>
@@ -630,5 +724,8 @@ console.log("🔥 Firebase Ready & Realtime Enabled");
   </div>
 
 </div>
+
+
+
 </body>
 </html>

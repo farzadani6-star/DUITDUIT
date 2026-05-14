@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<link
+  rel="stylesheet"
+  href="game.css"
+/>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>
+    Penguin Room
+  </title>
+
+</head>
+
+<body>
+
+  <!-- ========================= -->
+  <!-- PAGE -->
+  <!-- ========================= -->
+  <div class="penguin-page">
+
+    <!-- HEADER -->
+    <div class="penguin-header">
+
+    
+
+    </div>
+  <!-- ========================= -->
+    <!-- STATUS -->
+    <!-- ========================= -->
+<svg class="hud" viewBox="0 0 230 70">
+
+  <!-- 🍖 -->
+  <g transform="translate(10,10)">
+    <rect width="45" height="50" rx="10" fill="#f5f7fb"/>
+    <text x="13" y="18" font-size="14">🍖</text>
+
+    <rect x="10" y="28" width="25" height="18" rx="6" fill="#e6edf5"/>
+    <rect id="laparBar" x="10" y="46" width="25" height="0" rx="6" fill="#ffcc33"/>
+  </g>
+
+  <!-- ❤️ -->
+  <g transform="translate(65,10)">
+    <rect width="45" height="50" rx="10" fill="#f5f7fb"/>
+    <text x="13" y="18" font-size="14">❤️</text>
+
+    <rect x="10" y="28" width="25" height="18" rx="6" fill="#e6edf5"/>
+    <rect id="moodBar" x="10" y="46" width="25" height="0" rx="6" fill="#ff6a88"/>
+  </g>
+
+  <!-- 😴 -->
+  <g transform="translate(120,10)">
+    <rect width="45" height="50" rx="10" fill="#f5f7fb"/>
+    <text x="13" y="18" font-size="14">😴</text>
+
+    <rect x="10" y="28" width="25" height="18" rx="6" fill="#e6edf5"/>
+    <rect id="energiBar" x="10" y="46" width="25" height="0" rx="6" fill="#7f7fd5"/>
+  </g>
+
+  <!-- 🛁 -->
+  <g transform="translate(175,10)">
+    <rect width="45" height="50" rx="10" fill="#f5f7fb"/>
+    <text x="13" y="18" font-size="14">🛁</text>
+
+    <rect x="10" y="28" width="25" height="18" rx="6" fill="#e6edf5"/>
+    <rect id="bersihBar" x="10" y="46" width="25" height="0" rx="6" fill="#42e695"/>
+  </g>
+
+</svg>
+    <!-- ========================= -->
+    <!-- ROOM -->
+    <!-- ========================= -->
+    <div class="penguin-room">
+<div class="coin-box">
+  <div class="icon">🪙</div>
+  <div id="coinText">0</div>
+</div>
+      <!-- LANGIT -->
+      <div class="room-sky"></div>
+
+      <!-- BINTANG -->
+      <div class="star s1"></div>
+      <div class="star s2"></div>
+      <div class="star s3"></div>
+      <div class="star s4"></div>
+
+      <!-- AWAN -->
+      <div class="cloud c1"></div>
+      <div class="cloud c2"></div>
+
+      <!-- LAMPU -->
+      <div class="room-lamp"></div>
+
+
+
+      <!-- KARPET -->
+      <div class="room-carpet"></div>
+      <div id="bubbleContainer"></div>
+
+
+
+      <!-- JENDELA -->
+      <div class="window-room">
+
+        <div class="window-line v"></div>
+
+        <div class="window-line h"></div>
+
+      </div>
+
+
+
+      <!-- PENGUIN -->
+      <div id="bigPenguin">
+<!-- ========================= -->
+<!-- BIG PENGUIN -->
+<!-- ========================= -->
+<div id="bigPenguin">
+
+  <svg
+    width="220"
+    height="220"
+
+    viewBox="0 0 120 120"
+
+    xmlns="http://www.w3.org/2000/svg"
+  >
+
+    <!-- BADAN -->
+    <circle
+      cx="60"
+      cy="60"
+      r="55"
+
+      fill="#64C8F0"
+
+      stroke="#4FA7CC"
+
+      stroke-width="2"
+    />
+
+    <!-- MUKA -->
+    <ellipse
+      cx="60"
+      cy="65"
+      rx="42"
+      ry="38"
+
+      fill="#FFFFFF"
+
+      stroke="#DDEAF2"
+
+      stroke-width="1.5"
+    />
+        <!-- PIPI -->
+<ellipse
+  id="cheekLeft"
+  cx="35"
+  cy="70"
+  rx="12"
+  ry="9"
+  fill="#FF5A7A"
+  opacity="0.4"
+/>
+
+<ellipse
+  id="cheekRight"
+  cx="85"
+  cy="70"
+  rx="12"
+  ry="9"
+  fill="#FF5A7A"
+  opacity="0.4"
+/>
+    <!-- KERONGKONGAN / MULUT DALAM -->
+<ellipse
+  id="throat"
+  cx="60"
+  cy="78"
+  rx="15"
+  ry="5"
+  fill="#7A3E1A"
+  opacity="0.9"
+  transform="translate(0,-7)"
+/>
+
+
+
+    <!-- PARUH -->
+<g id="beakGroup" transform="translate(0,0)">
+
+  <!-- PARUH ATAS -->
+  <path
+    id="beakTop"
+    d="M42 70 Q60 60 78 70 Q60 68 42 70"
+    fill="#FF9A3C"
+    stroke="#E57F1F"
+    stroke-width="1.5"
+    transform="translate(0,1)"
+  />
+
+  <!-- PARUH BAWAH -->
+  <path
+    id="beakBottom"
+    d="M45 72 Q60 82 75 72 Q60 74 45 72"
+    fill="#FF9A3C"
+    stroke="#E57F1F"
+    stroke-width="1.5"
+    transform="translate(0,-1)"
+  />
+
+</g>
+
+    <!-- MATA -->
+    <ellipse
+      id="bigMataKiri"
+
+      cx="42"
+      cy="50"
+
+      rx="6"
+      ry="6"
+
+      fill="#000"
+    />
+
+    <ellipse
+      id="bigMataKanan"
+
+      cx="78"
+      cy="50"
+
+      rx="6"
+      ry="6"
+
+      fill="#000"
+    />
+
+    <!-- KILAT -->
+    <circle
+      cx="40"
+      cy="48"
+
+      r="2"
+
+      fill="#FFF"
+    />
+
+    <circle
+      cx="76"
+      cy="48"
+
+      r="2"
+
+      fill="#FFF"
+    />
+
+
+
+    <!-- TANGAN -->
+    <ellipse
+      cx="20"
+      cy="75"
+
+      rx="8"
+      ry="14"
+
+      fill="#64C8F0"
+
+      stroke="#4FA7CC"
+
+      stroke-width="1.5"
+    />
+
+    <ellipse
+      cx="100"
+      cy="75"
+
+      rx="8"
+      ry="14"
+
+      fill="#64C8F0"
+
+      stroke="#4FA7CC"
+
+      stroke-width="1.5"
+    />
+
+    <!-- KAKI -->
+    <ellipse
+      cx="40"
+      cy="105"
+
+      rx="7"
+      ry="9"
+
+      fill="#64C8F0"
+
+      stroke="#4FA7CC"
+
+      stroke-width="1.5"
+    />
+
+    <ellipse
+      cx="80"
+      cy="105"
+
+      rx="7"
+      ry="9"
+
+      fill="#64C8F0"
+
+      stroke="#4FA7CC"
+
+      stroke-width="1.5"
+    />
+<!-- LUMPUR BODY -->
+<g id="mudLayer" opacity="0">
+  
+  <ellipse cx="55" cy="25" rx="25" ry="18" fill="#6B4A2D" opacity="0.85"/>
+  <ellipse cx="75" cy="80" rx="18" ry="14" fill="#5A3D24" opacity="0.8"/>
+  <ellipse cx="40" cy="98" rx="15" ry="12" fill="#7A5330" opacity="0.75"/>
+
+</g>
+<div id="mudDropContainer"></div>
+  </svg>
+
+</div>
+        
+
+      </div>
+
+    </div>
+
+  
+
+    <!-- ========================= -->
+    <!-- ACTION -->
+    <!-- ========================= -->
+    <div class="penguin-actions">
+
+<button onclick="feedPenguin()">🍖 Makan (2 coin)</button>
+<button onclick="petPenguin()">❤️ Elus</button>
+<button onclick="toggleSleepPenguin()">😴 Lampu</button>
+
+
+<button onclick="bathPenguin()">🛁 Mandi</button>
+
+    </div>
+
+  </div>
+  
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+  import {
+    getFirestore,
+    doc,
+    setDoc,
+    onSnapshot,
+    collection,
+    addDoc,
+    getDocs,
+    deleteDoc,
+    updateDoc
+  } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "...",
+    authDomain: "...",
+    projectId: "money-8fe40",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window.db = db;
+  window.fb = {
+    doc,
+    setDoc,
+    onSnapshot,
+    collection,
+    addDoc,
+    getDocs,
+    deleteDoc,
+    updateDoc
+  };
+
+  console.log("🔥 Firebase Ready");
+</script>
+
+<script type="module" src="game.js"></script>
+
+
+</body>
+</html>

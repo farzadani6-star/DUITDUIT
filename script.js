@@ -204,54 +204,126 @@ tipeSelect.addEventListener("change", () => {
 // FIREBASE
 // ==========================
 function startRealtime() {
-fb.onSnapshot(fb.collection(db, "transaksi"), (snap) => {
-  data = snap.docs.map(d => {
-    const raw = d.data();
-    return {
-      id: d.id,
-      ...raw,
-      tanggal: raw.tanggal || new Date().toISOString()
-    };
-  });
 
-  // 🔥 URUTKAN: LAMA → BARU (baru di bawah)
-  data.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+  // ==========================
+  // PENGUIN REF
+  // ==========================
+  const penguinRef =
 
-  render();
-});
+    fb.doc(
+      db,
+      "game",
+      "penguin"
+    );
 
-// ==========================
-// REALTIME TABUNGAN
-// ==========================
-fb.onSnapshot(
+  // ==========================
+  // REALTIME TRANSAKSI
+  // ==========================
+  fb.onSnapshot(
 
-  fb.collection(
-    db,
-    "tabungan"
-  ),
+    fb.collection(
+      db,
+      "transaksi"
+    ),
 
-  (snapshot) => {
+    (snap) => {
 
-    tabunganData =
+      data = snap.docs.map(d => {
 
-      snapshot.docs.map(doc => ({
+        const raw =
+          d.data();
 
-        id:doc.id,
+        return {
 
-        ...doc.data()
+          id:d.id,
 
-      }));
+          ...raw,
 
-    // delay dikit biar DOM ready
-    setTimeout(() => {
+          tanggal:
+            raw.tanggal ||
+            new Date()
+            .toISOString()
 
-      renderTabungan();
+        };
 
-    },100);
+      });
 
-  }
+      // urut
+      data.sort(
+        (a,b)=>
 
-);
+        new Date(a.tanggal)
+        -
+        new Date(b.tanggal)
+      );
+
+      // render
+      render(
+        penguinRef
+      );
+
+    }
+
+  );
+
+  // ==========================
+  // REALTIME COIN
+  // ==========================
+  fb.onSnapshot(
+
+    penguinRef,
+
+    (snap) => {
+
+      if(
+        snap.exists()
+      ){
+
+        const data =
+          snap.data();
+
+        penguinCoin =
+          data.coin || 0;
+
+        updateCoinUI();
+
+      }
+
+    }
+
+  );
+
+  // ==========================
+  // REALTIME TABUNGAN
+  // ==========================
+  fb.onSnapshot(
+
+    fb.collection(
+      db,
+      "tabungan"
+    ),
+
+    (snapshot) => {
+
+      tabunganData =
+
+        snapshot.docs.map(doc => ({
+
+          id:doc.id,
+
+          ...doc.data()
+
+        }));
+
+      setTimeout(() => {
+
+        renderTabungan();
+
+      },100);
+
+    }
+
+  );
 
 }
 
@@ -407,10 +479,16 @@ window.editData = editData;
 // ==========================
 // RENDER
 // ==========================
+let penguinCoin = 0;
+
+let lastIncomeCount = 0;
+
+let firstLoadIncome = true;
 let saldoGlobal = 0;
 
-function render() {
-
+function render(
+  penguinRef
+){
   tbody.innerHTML = "";
 
   let totalMasukGlobal = 0;
@@ -677,6 +755,9 @@ function render() {
   saldoEl.textContent =
     formatRupiah(saldo);
 
+
+// 🔥 paling bawah
+updatePenguinMood();
   // ==========================
   // CHART UTAMA
   // ==========================
@@ -715,7 +796,86 @@ function render() {
   ];
 
   ownerChart.update();
+  
+// ==========================
+// CEK PEMASUKAN BESAR
+// ==========================
+const incomeList =
 
+  data.filter(
+    i => i.tipe === "masuk"
+  );
+
+// skip awal load
+if(firstLoadIncome){
+
+  lastIncomeCount =
+    incomeList.length;
+
+  firstLoadIncome =
+    false;
+
+}
+
+// pemasukan baru
+else if(
+
+  incomeList.length >
+  lastIncomeCount
+
+){
+
+  // ambil terakhir
+  const latestIncome =
+
+    incomeList[
+      incomeList.length - 1
+    ];
+
+  // jumlah number
+  const jumlahMasuk =
+
+    Number(
+      latestIncome.jumlah
+    );
+
+  // minimal 100rb
+  if(
+    jumlahMasuk >= 100000
+  ){
+
+    // animasi
+    penguinHappy();
+
+    // tambah coin firestore
+fb.setDoc(
+
+  penguinRef,
+
+  {
+
+    coin:
+      penguinCoin + 50
+
+  },
+
+  {
+    merge:true
+  }
+
+);
+
+    console.log(
+      "🪙 Coin bertambah!"
+    );
+
+  }
+
+  // update counter
+  lastIncomeCount =
+    incomeList.length;
+
+}
   // ==========================
   // BULAN CHART
   // ==========================
@@ -3733,5 +3893,226 @@ async function confirmAmbil(){
     );
 
   }
+
+}
+
+const mataKiri =
+  document.getElementById(
+    "mataKiri"
+  );
+
+const mataKanan =
+  document.getElementById(
+    "mataKanan"
+  );
+
+function blinkPenguin(){
+
+  mataKiri.setAttribute(
+    "ry",
+    "1"
+  );
+
+  mataKanan.setAttribute(
+    "ry",
+    "1"
+  );
+
+  setTimeout(() => {
+
+    mataKiri.setAttribute(
+      "ry",
+      "6"
+    );
+
+    mataKanan.setAttribute(
+      "ry",
+      "6"
+    );
+
+  },150);
+
+}
+
+// blink random
+setInterval(() => {
+
+  blinkPenguin();
+
+},4000);
+
+
+
+// ==========================
+// UPDATE PENGUIN MOOD
+// ==========================
+function updatePenguinMood(){
+
+  const mulut =
+    document.getElementById(
+      "mulut"
+    );
+
+  const penguin =
+    document.getElementById(
+      "penguin"
+    );
+
+  const pipiKiri =
+    document.querySelectorAll(
+      'ellipse[fill="#F888A2"]'
+    )[0];
+
+  const pipiKanan =
+    document.querySelectorAll(
+      'ellipse[fill="#F888A2"]'
+    )[1];
+
+  if(
+    !mulut ||
+    !penguin
+  ) return;
+
+  // ==========================
+  // SALDO KRITIS
+  // ==========================
+if(
+  Number(saldoGlobal || 0)
+  <= 100000
+){
+
+    // mulut sedih
+    mulut.setAttribute(
+
+      "d",
+
+      "M52 78 Q60 70 68 78"
+
+    );
+
+    // pipi redup
+    if(pipiKiri)
+      pipiKiri.style.opacity = ".35";
+
+    if(pipiKanan)
+      pipiKanan.style.opacity = ".35";
+
+    // badan turun dikit
+    penguin.style.transform =
+      "translateY(4px)";
+
+  }
+
+  // ==========================
+  // NORMAL
+  // ==========================
+  else {
+
+    // senyum
+    mulut.setAttribute(
+
+      "d",
+
+      "M52 74 Q60 79 68 74"
+
+    );
+
+    // pipi normal
+    if(pipiKiri)
+      pipiKiri.style.opacity = ".75";
+
+    if(pipiKanan)
+      pipiKanan.style.opacity = ".75";
+
+    penguin.style.transform =
+      "translateY(0px)";
+
+  }
+
+}
+
+// ==========================
+// PENGUIN HAPPY
+// ==========================
+
+function penguinHappy(){
+
+  const penguin =
+    document.getElementById(
+      "penguin"
+    );
+
+  if(!penguin) return;
+
+  // reset
+  penguin.classList.remove(
+    "penguin-happy"
+  );
+
+  // trigger ulang animasi
+  void penguin.offsetWidth;
+
+  penguin.classList.add(
+    "penguin-happy"
+  );
+
+const mataKiri =
+  document.getElementById(
+    "mataKiri"
+  );
+
+const mataKanan =
+  document.getElementById(
+    "mataKanan"
+  );
+
+// mata > <
+mataKiri.setAttribute(
+  "ry",
+  "1"
+);
+
+mataKanan.setAttribute(
+  "ry",
+  "1"
+);
+
+  // stop
+  setTimeout(() => {
+
+    penguin.classList.remove(
+      "penguin-happy"
+    );
+    
+mataKiri.setAttribute(
+  "ry",
+  "6"
+);
+
+mataKanan.setAttribute(
+  "ry",
+  "6"
+);
+
+  },2000);
+
+}
+
+// ==========================
+// UPDATE COIN UI
+// ==========================
+function updateCoinUI(){
+
+  const coinEl =
+
+    document.getElementById(
+      "coinText"
+    );
+
+  if(!coinEl) return;
+
+  coinEl.textContent =
+
+    `🪙 ${penguinCoin}`;
 
 }

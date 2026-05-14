@@ -1014,7 +1014,7 @@ td button {
 ========================== */
 .page {
   display: none;
-  animation: slideIn 0.25s ease;
+  
 }
 
 .page.active {
@@ -2045,3 +2045,124 @@ td button {
   cursor:pointer;
 
 }
+
+
+.container-penguin{
+
+  position:fixed;
+
+  right:16px;
+
+  bottom:95px;
+
+  z-index:99999;
+
+}
+
+.floating-penguin{
+
+  width:90px;
+
+  height:90px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  animation:
+
+    penguinFloat 3s ease-in-out infinite;
+
+  cursor:pointer;
+
+  user-select:none;
+
+}
+
+#penguin{
+
+  filter:
+
+    drop-shadow(
+      0 10px 20px rgba(0,0,0,.18)
+    );
+
+  transition:.2s;
+
+}
+
+.floating-penguin:active #penguin{
+
+  transform:scale(.95);
+
+}
+
+@keyframes penguinFloat{
+
+  0%{
+    transform:translateY(0px);
+  }
+
+  50%{
+    transform:translateY(-10px);
+  }
+
+  100%{
+    transform:translateY(0px);
+  }
+
+}
+
+.penguin-happy{
+
+  animation:
+    penguinJump .45s ease infinite;
+
+}
+
+@keyframes penguinJump{
+
+  0%{
+
+    transform:
+      translateY(0px)
+      rotate(0deg);
+
+  }
+
+  25%{
+
+    transform:
+      translateY(-18px)
+      rotate(-8deg);
+
+  }
+
+  50%{
+
+    transform:
+      translateY(0px)
+      rotate(0deg);
+
+  }
+
+  75%{
+
+    transform:
+      translateY(-18px)
+      rotate(8deg);
+
+  }
+
+  100%{
+
+    transform:
+      translateY(0px)
+      rotate(0deg);
+
+  }
+
+}
+
