@@ -1,17 +1,4 @@
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 
-import {
-  getFirestore,
-  doc,
-  onSnapshot
-} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
-
-// ======================================================
-// 1. FIREBASE REF
-// ======================================================
-const penguinDocRef = fb.doc(db, "game", "penguin");
 
 // ======================================================
 // 2. GLOBAL STATE
@@ -31,8 +18,6 @@ let penguinAIState = {
 };
 
 let isLoaded = false;
-let isSleeping = false;
-let isBlinkLocked = false;
 let sleepInterval = null;
 let isBathing = false;
 let bathInterval = null;
@@ -46,18 +31,34 @@ function updateCoinUI(){
 
 function updateStatusUI(){
 
-  const set = (id,val)=>{
+  const setBar = (id,val)=>{
     const el = document.getElementById(id);
     if(el){
-      el.setAttribute("height", val * 0.18); // scale kecil
+      el.setAttribute("height", val * 0.18);
       el.setAttribute("y", 46 - (val * 0.18));
     }
   };
 
-  set("laparBar", penguinState.lapar);
-  set("moodBar", penguinState.mood);
-  set("energiBar", penguinState.energi);
-  set("bersihBar", penguinState.bersih);
+  const setText = (id,val)=>{
+    const el = document.getElementById(id);
+    if(el){
+      el.textContent = Math.round(val) + "%";
+    }
+  };
+
+  setBar("laparBar", penguinState.lapar);
+  setBar("moodBar", penguinState.mood);
+  setBar("energiBar", penguinState.energi);
+  setBar("bersihBar", penguinState.bersih);
+
+  setText("laparText", penguinState.lapar);
+  setText("moodText", penguinState.mood);
+  setText("energiText", penguinState.energi);
+  setText("bersihText", penguinState.bersih);
+
+
+
+  updateHungerExpression();
 }
 
 
@@ -80,113 +81,174 @@ function clampStats(){
 // ======================================================
 // 5. FIREBASE SAVE / LOAD
 // ======================================================
-function saveToFirebase(){
-  fb.setDoc(penguinDocRef, {
-    ...penguinState,
+function saveGame(){
+  localStorage.setItem("penguin", JSON.stringify({
     coin: penguinCoin,
-    lastTime: Date.now(),
-    sleeping: isSleeping
-  });
+    state: penguinState,
+    sleeping: isSleeping,
+    time: Date.now()
+  }));
 }
 
-fb.onSnapshot(penguinDocRef, (snap) => {
+function loadGame(){
+  const raw = localStorage.getItem("penguin");
+  if(!raw) {
+    isLoaded = true;
+    updateStatusUI();
+    updateCoinUI();
+    return;
+  }
 
-  if (!snap.exists()) return;
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    console.log("corrupt save reset");
+    isLoaded = true;
+    return;
+  }
 
-  const data = snap.data();
-
-  // =========================
-  // LOAD SLEEP STATE (FIXED)
-  // =========================
-  isSleeping = data.sleeping || false;
-
-  const now = Date.now();
-  const last = data.lastTime || now;
-
-  const diffMinutes = Math.floor((now - last) / 60000);
-
-  // =========================
-  // LOAD DATA
-  // =========================
   penguinCoin = data.coin || 0;
 
-  penguinState.lapar = data.lapar ?? 100;
-  penguinState.mood = data.mood ?? 100;
-  penguinState.energi = data.energi ?? 100;
-  penguinState.bersih = data.bersih ?? 100;
+  Object.assign(penguinState, data.state || {});
 
-  // =========================
-  // OFFLINE EFFECT
-  // =========================
-if (diffMinutes > 0) {
+  isSleeping = data.sleeping || false;
+initEyeSystem(); // 🔥 penting
 
-  const decay = diffMinutes;
+  const diff = Math.min(
+    60,
+    Math.floor((Date.now() - data.time) / 60000)
+  );
 
-  penguinState.lapar -= decay * 2;
-  penguinState.mood -= decay;
-  penguinState.bersih -= decay * 3;
-
-  if (data.sleeping) {
-
-    // 💤 sleep reduce decay + regen energi
-    penguinState.energi += decay * 2;
-
-    // bonus: decay lebih ringan saat tidur
-    penguinState.lapar += decay * 1; // offset sedikit
-    penguinState.mood += decay * 0.5;
-  } 
-  else {
-
-    // 🔥 normal offline decay
-    penguinState.energi -= decay * 1;
-  }
-}
-
-  clampStats();
-  updateMudState();
-  isLoaded = true;
-
-  updateStatusUI();
-  updateCoinUI();
-
-
-  // =========================
-  // EYE STATE SYNC
-  // =========================
-  const room = document.querySelector(".penguin-room");
+  penguinState.lapar -= diff * 2;
+  penguinState.mood -= diff;
+  penguinState.bersih -= diff * 3;
 
   if (isSleeping) {
-    if (room) room.classList.add("sleep-mode");
-    eyesSleepMode();
+    penguinState.energi += diff * 2;
   } else {
-    if (room) room.classList.remove("sleep-mode");
-    eyesWakeMode();
+    penguinState.energi -= diff;
   }
 
-});
+  clampStats();
 
+  // 🔥 IMPORTANT: INIT STATE AFTER LOAD
+  isLoaded = true;
+  updateStatusUI();
+  updateCoinUI();
+  updateMudState?.();
+  eyesWakeMode?.();
+}
+window.addEventListener("DOMContentLoaded", () => {
+  loadGame();
+});
 // ======================================================
 // 6. ACTION SYSTEM
 // ======================================================
 
 // 🍖 makan
+function updateHungerExpression(){
+
+  if(isChewing) return; // 🔒 BIAR GAK NABRAK CHEW
+
+  const penguin = document.getElementById("bigPenguin");
+
+  const leftEye = document.getElementById("bigMataKiri");
+  const rightEye = document.getElementById("bigMataKanan");
+
+  const beakTop = document.getElementById("beakTop");
+  const beakBottom = document.getElementById("beakBottom");
+
+  const throat = document.getElementById("throat");
+
+  if(!penguin) return;
+
+  // =========================
+  // 🚫 NORMAL MODE → BALIK KE SYSTEM ASLI
+  // =========================
+  if(penguinState.lapar > 98){
+
+    penguin.classList.remove("sad-mode");
+    penguin.classList.remove("hunger-shake");
+
+    // 🔥 JANGAN RESET KE FIX VALUE ANEH
+    // cukup biarin blink system kamu yang handle
+    return;
+  }
+
+  // =========================
+  // 😐 MID MODE (26–50)
+  // =========================
+  if(penguinState.lapar > 25){
+
+    penguin.classList.remove("hunger-shake");
+
+    if(leftEye && rightEye){
+      leftEye.setAttribute("ry", "5");
+      rightEye.setAttribute("ry", "5");
+    }
+
+    if(beakTop && beakBottom){
+      beakTop.setAttribute("transform", "translate(0,1)");
+      beakBottom.setAttribute("transform", "translate(0,-1)");
+    }
+
+    if(throat){
+      throat.setAttribute("ry", "2");
+      throat.setAttribute("opacity", "1");
+      throat.setAttribute("transform", "translate(0,-6)");
+    }
+
+    return;
+  }
+
+  // =========================
+  // 😢 HUNGRY MODE (≤25)
+  // =========================
+  penguin.classList.add("hunger-shake");
+
+  if(leftEye && rightEye){
+    leftEye.setAttribute("ry", "2");
+    rightEye.setAttribute("ry", "2");
+
+    leftEye.setAttribute("cy", "53");
+    rightEye.setAttribute("cy", "53");
+  }
+
+  if(beakTop && beakBottom){
+    beakTop.setAttribute("transform", "translate(0,1)");
+    beakBottom.setAttribute("transform", "translate(0,3)");
+  }
+
+  if(throat){
+    throat.setAttribute("ry", "6");
+    throat.setAttribute("opacity", "1");
+    throat.setAttribute("transform", "translate(0,-6)");
+  }
+}
+
 function feedPenguin(){
 
-  if (penguinCoin < 2) return;
+  // 🍖 kalau sudah full
+if(penguinState.lapar >= 100){
+  setPetReaction(); // penguin senyum / nolak
+  return;
+}
 
-  penguinCoin -= 2;
+  if (penguinCoin < 0) return;
+
+  penguinCoin -= 0;
 
   penguinState.lapar += 10;
   penguinState.mood += 2;
 
   clampStats();
-
   updateCoinUI();
   updateStatusUI();
 
-  // animasi
   setEatingAnimation();
   chewBeak();
+  saveGame();
 }
 function setEatingAnimation(){
 
@@ -199,7 +261,13 @@ function setEatingAnimation(){
     penguin.classList.remove("eating");
   }, 1200);
 }
+
+let isChewing = false;
+
 function chewBeak(){
+
+  if(isChewing) return; // 🔒 anti double trigger
+  isChewing = true;
 
   const top = document.getElementById("beakTop");
   const bottom = document.getElementById("beakBottom");
@@ -215,7 +283,7 @@ function chewBeak(){
       bottom.setAttribute("transform", "translate(0,2)");
 
       if(throat){
-        throat.setAttribute("ry", "6"); // mulut lebih kebuka
+        throat.setAttribute("ry", "6");
       }
 
     } else {
@@ -224,7 +292,7 @@ function chewBeak(){
       bottom.setAttribute("transform", "translate(0,0)");
 
       if(throat){
-        throat.setAttribute("ry", "5"); // normal
+        throat.setAttribute("ry", "5");
       }
     }
 
@@ -239,6 +307,8 @@ function chewBeak(){
       if(throat){
         throat.setAttribute("ry", "2");
       }
+
+      isChewing = false; // 🔓 unlock di akhir
     }
 
   }, 120);
@@ -248,17 +318,22 @@ function chewBeak(){
 // ❤️ elus
 function petPenguin(){
 
+  // ❗ anti spam ringan
+  if(isBlinkLocked) return;
+
   penguinState.mood += 5;
+
   clampStats();
   updateStatusUI();
 
-  // 🚫 lock blink
   isBlinkLocked = true;
 
   setPetReaction();
   blushCheeks();
 
-  // unlock setelah animasi selesai
+  // save setelah state stabil (lebih aman)
+  saveGame();
+
   setTimeout(() => {
     isBlinkLocked = false;
   }, 1200);
@@ -324,7 +399,7 @@ window.bathPenguin = function(){
     stopBathBubbles();
   }
 
-  saveToFirebase?.();
+saveGame();
 }
 
 function startBathBubbles(){
@@ -421,53 +496,125 @@ function updateMudState(){
 // ======================================================
 // 7. SLEEP SYSTEM
 // ======================================================
+
+
+// ======================================================
+// EYE SYSTEM GLOBAL STATE
+// ======================================================
+let isSleeping = false;
+let isBlinkLocked = false;
+let blinkInterval = null;
+
+// ======================================================
+// EYE VISUAL STATE
+// ======================================================
+function eyesSleepMode(){
+
+  const kiri = document.getElementById("bigMataKiri");
+  const kanan = document.getElementById("bigMataKanan");
+
+  if(!kiri || !kanan) return;
+
+  kiri.setAttribute("ry","1");
+  kanan.setAttribute("ry","1");
+}
+
+function eyesWakeMode(){
+
+  const kiri = document.getElementById("bigMataKiri");
+  const kanan = document.getElementById("bigMataKanan");
+
+  if(!kiri || !kanan) return;
+
+  kiri.setAttribute("ry","6");
+  kanan.setAttribute("ry","6");
+}
+
+// ======================================================
+// BLINK CORE
+// ======================================================
+function blinkPenguin(){
+
+  if(isSleeping || isBlinkLocked) return;
+
+  const kiri = document.getElementById("bigMataKiri");
+  const kanan = document.getElementById("bigMataKanan");
+
+  if(!kiri || !kanan) return;
+
+  kiri.setAttribute("ry","1");
+  kanan.setAttribute("ry","1");
+
+  setTimeout(() => {
+
+    if(isSleeping || isBlinkLocked) return;
+
+    kiri.setAttribute("ry","6");
+    kanan.setAttribute("ry","6");
+
+  }, 150);
+}
+
+// ======================================================
+// BLINK LOOP CONTROL
+// ======================================================
+function startBlink(){
+
+  stopBlink();
+
+  blinkInterval = setInterval(() => {
+
+    if(isSleeping) return;
+
+    if(Math.random() > 0.5){
+      blinkPenguin();
+    }
+
+  }, 3000);
+}
+
+function stopBlink(){
+
+  if(blinkInterval){
+    clearInterval(blinkInterval);
+    blinkInterval = null;
+  }
+}
+
+// ======================================================
+// SLEEP SYSTEM (MASTER CONTROL)
+// ======================================================
 function toggleSleepPenguin(){
 
   const room = document.querySelector(".penguin-room");
 
-  if(!isSleeping){
+  isSleeping = !isSleeping;
 
-    // ======================
-    // SLEEP ON
-    // ======================
-    isSleeping = true;
+  if(isSleeping){
 
-    if(room) room.classList.add("sleep-mode");
+    isBlinkLocked = true;
+
+    room?.classList.add("sleep-mode");
 
     eyesSleepMode();
 
-    if(sleepInterval) clearInterval(sleepInterval);
-
-    sleepInterval = setInterval(() => {
-      penguinState.energi += 2;
-      clampStats();
-      updateStatusUI();
-    }, 5000);
+    stopBlink(); // STOP TOTAL BLINK
 
   } else {
 
-    // ======================
-    // WAKE UP
-    // ======================
-    isSleeping = false;
+    isBlinkLocked = false;
 
-    if(room) room.classList.remove("sleep-mode");
+    room?.classList.remove("sleep-mode");
 
     eyesWakeMode();
 
-    if(sleepInterval){
-      clearInterval(sleepInterval);
-      sleepInterval = null;
-    }
+    startBlink(); // START AGAIN
   }
 
-  saveToFirebase();
+  saveGame?.();
 }
 
-
-// ======================
-// OPTIONAL (KEEP ONLY IF YOU STILL CALL IT)
-// ======================
+// optional alias
 function sleepPenguin(){
   if(isSleeping) return;
   toggleSleepPenguin();
@@ -478,55 +625,19 @@ function wakePenguin(){
   toggleSleepPenguin();
 }
 
-
-
 // ======================================================
-// 8. BLINK SYSTEM
+// INIT SYSTEM (WAJIB DIPANGGIL SAAT GAME START)
 // ======================================================
-function blinkPenguin(){
+function initEyeSystem(){
 
-  if(isSleeping) return;
-  if(isBlinkLocked) return;
-  const kiri = document.getElementById("bigMataKiri");
-  const kanan = document.getElementById("bigMataKanan");
-
-  if(!kiri || !kanan) return;
-
-  kiri.setAttribute("ry","1");
-  kanan.setAttribute("ry","1");
-
-  setTimeout(()=>{
-    kiri.setAttribute("ry","6");
-    kanan.setAttribute("ry","6");
-  },150);
-}
-
-setInterval(()=>{
-  if(!isSleeping && Math.random() > 0.5){
-    blinkPenguin();
-  }
-},3000);
-
-// ======================================================
-// 9. EYE MODE
-// ======================================================
-function eyesSleepMode(){
-  const kiri = document.getElementById("bigMataKiri");
-  const kanan = document.getElementById("bigMataKanan");
-
-  if(kiri && kanan){
-    kiri.setAttribute("ry","1");
-    kanan.setAttribute("ry","1");
-  }
-}
-
-function eyesWakeMode(){
-  const kiri = document.getElementById("bigMataKiri");
-  const kanan = document.getElementById("bigMataKanan");
-
-  if(kiri && kanan){
-    kiri.setAttribute("ry","6");
-    kanan.setAttribute("ry","6");
+  if(isSleeping){
+    eyesSleepMode();
+    isBlinkLocked = true;
+    stopBlink();
+  } else {
+    eyesWakeMode();
+    isBlinkLocked = false;
+    startBlink();
   }
 }
 
@@ -604,45 +715,51 @@ function penguinBrain(){
 // ======================================================
 // 11. LOOPS
 // ======================================================
-setInterval(()=>{
-
-if(!isLoaded) return;
-
-if(isSleeping){
-
-  // 💤 sleep mode (regen)
-  penguinState.energi += 2;
-  penguinState.lapar -= 0.5;
-  penguinState.mood -= 0.2;
-
-} else {
-
-  // 🔥 normal decay
-  penguinState.lapar -= 3;
-  penguinState.mood -= 1;
-  penguinState.energi -= 1;
-  penguinState.bersih -= 2;
-}
-
-clampStats();
-
-},30000);
-
-setInterval(()=>{
-
-  if(!isLoaded || isSleeping) return;
-
-  penguinBrain();
-  updateMudState();
-},1500);
-
-setInterval(()=>{
+setInterval(() => {
 
   if(!isLoaded) return;
 
-  saveToFirebase();
+  if(isSleeping){
 
-},2000);
+    // 💤 SLEEP MODE (pelan + seimbang)
+    penguinState.energi += 1.5;   // naik
+    penguinState.lapar -= 0.3;     // turun pelan
+    penguinState.mood -= 0.1;      // turun sangat pelan
+    penguinState.bersih -= 0.05;   // hampir gak kerasa
+
+  } else {
+
+    // 🔥 NORMAL MODE
+    penguinState.lapar -= 2;
+    penguinState.mood -= 0.3;
+    penguinState.energi -= 0.2;
+    penguinState.bersih -= 0.1;
+  }
+
+  clampStats();
+ updateStatusUI();
+}, 3000);
+
+setInterval(() => {
+
+  if(!isLoaded) return;
+
+  if(!isSleeping){
+    penguinBrain();
+  }
+
+  updateMudState();
+
+}, 1500);
+
+setInterval(() => {
+
+  if(!isLoaded) return;
+
+  // simpan hanya kalau ada perubahan penting
+  saveGame();
+
+}, 8000);
 
 function getPenguinRect(){
   const el = document.getElementById("bigPenguin");
@@ -716,5 +833,33 @@ window.petPenguin = petPenguin;
 window.toggleSleepPenguin = toggleSleepPenguin;
 window.sleepPenguin = sleepPenguin;
 window.wakePenguin = wakePenguin;
-window.wakePenguin = wakePenguin;
+
 window.bathPenguin = bathPenguin;
+
+function initGame(){
+  loadGame();        // ambil data dulu
+
+  clampStats();      // rapihin angka
+
+  updateCoinUI();
+  updateStatusUI();
+  initEyeSystem();
+
+  applySleepVisual?.();
+
+  // 🔥 WAJIB sync visual sleep
+  if(isSleeping){
+    document.querySelector(".penguin-room")?.classList.add("sleep-mode");
+    eyesSleepMode();
+  } else {
+    document.querySelector(".penguin-room")?.classList.remove("sleep-mode");
+    eyesWakeMode();
+  }
+
+  updateMudState?.();
+  updateHungerExpression?.();
+
+  isLoaded = true; // 🔥 INI PENTING BANGET
+}
+
+initGame();
