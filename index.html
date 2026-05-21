@@ -103,54 +103,37 @@
 
 <div class="container">
 
-  <div id="page-home" class="page active">
+<div id="page-home" class="page active">
 
-<div class="home">
+  <div class="scrapbook-header">
 
-  <!-- HEADER -->
-  <div class="home-header">
+    <svg viewBox="0 0 400 80" class="scrap-svg">
+      <path d="M0 40 Q100 0 200 40 T400 40"
+        fill="none"
+        stroke="#ffb6d9"
+        stroke-width="3"/>
 
-    <!-- SVG ORNAMENT ATAS -->
-    <svg class="header-decor" viewBox="0 0 200 40">
-      <path d="M0,20 Q50,0 100,20 T200,20" stroke="#ff9ac2" fill="none" stroke-width="1"/>
-      <circle cx="100" cy="20" r="3" fill="#ff9ac2"/>
+      <circle cx="200" cy="40" r="6" fill="#ff8fc2"/>
     </svg>
 
-    <h2>FOTO</h2>
-    <p>Surere & Sulala</p>
-
-    <!-- SVG ORNAMENT BAWAH -->
-    <svg class="header-decor" viewBox="0 0 200 40">
-      <path d="M0,20 Q50,40 100,20 T200,20" stroke="#ffc1da" fill="none" stroke-width="1"/>
-    </svg>
+    <h1>Foto</h1>
+    <p>Surere & Sulala 💕</p>
 
   </div>
 
   <!-- HERO -->
-  <div class="hero-container">
+  <div class="scrap-hero">
 
-    <!-- SVG OVERLAY -->
-    <svg class="hero-overlay" viewBox="0 0 400 200" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="heroGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="rgba(255,150,200,0.3)"/>
-          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-        </linearGradient>
-      </defs>
+    <div id="heroPhoto" class="hero-polaroid"></div>
 
-      <rect width="400" height="200" fill="url(#heroGrad)"/>
-    </svg>
+    <div class="hero-sticker">💖</div>
+    <div class="hero-sticker2">✨</div>
 
-    <div id="heroPhoto" class="hero-photo"></div>
   </div>
 
-  <!-- GALLERY DIVIDER -->
- 
+  <!-- SCRAPBOOK WALL -->
+  <div id="gallery" class="scrapbook-wall"></div>
 
-  <!-- GALLERY -->
-  <div id="gallery" class="gallery"></div>
-
-</div>
 </div>
   
 
@@ -276,7 +259,9 @@
     </select>
 
     <button type="submit">Tambah</button>
-     <div>
+   
+  </form>
+  <div>
   <button
   class="tabungan-page-btn"
   onclick="openTabunganPage()"
@@ -284,8 +269,6 @@
   💰 Tabungan Pribadi
 </button>
 </div> 
-  </form>
-
   <!-- ================= TABEL ================= -->
   <div class="table-wrapper">
 
@@ -352,12 +335,12 @@
 
   <button id="prevChartBtn"
     onclick="prevChartPage()">
-    < Sebelumnya
+    Sebelumnya
   </button>
 
   <button id="nextChartBtn"
     onclick="nextChartPage()">
-    Selanjutnya >
+    Selanjutnya 
   </button>
 
 </div>
@@ -494,6 +477,262 @@ console.log("🔥 Firebase Ready & Realtime Enabled");
 <div id="toast" class="toast"></div>
 
 <input type="file" id="photoInput" accept="image/*" style="display:none;">
+<!-- ==========================
+     FLOAT BUTTON
+========================== -->
+<div
+  class="finance-calc-float"
+  onclick="toggleFinanceCalc()"
+>
+
+  <svg
+    class="finance-calc-icon"
+    viewBox="0 0 24 24"
+    fill="none"
+  >
+
+    <!-- BODY -->
+    <rect
+      x="5"
+      y="2"
+      width="14"
+      height="20"
+      rx="4"
+      fill="currentColor"
+      opacity="0.15"
+    />
+
+    <!-- SCREEN -->
+    <rect
+      x="8"
+      y="5"
+      width="8"
+      height="3"
+      rx="1"
+      fill="currentColor"
+    />
+
+    <!-- BUTTONS -->
+    <circle cx="9" cy="12" r="1.1" fill="currentColor"/>
+    <circle cx="12" cy="12" r="1.1" fill="currentColor"/>
+    <circle cx="15" cy="12" r="1.1" fill="currentColor"/>
+
+    <circle cx="9" cy="16" r="1.1" fill="currentColor"/>
+    <circle cx="12" cy="16" r="1.1" fill="currentColor"/>
+    <circle cx="15" cy="16" r="1.1" fill="currentColor"/>
+
+  </svg>
+
+</div>
+
+<!-- ==========================
+     CALCULATOR
+========================== -->
+
+<div
+  class="finance-calc-box"
+  id="financeCalcBox"
+>
+
+  <!-- HEADER -->
+  <div class="finance-calc-header">
+
+    <div class="finance-calc-title">
+      Kalkulator
+    </div>
+
+    <div class="finance-calc-actions">
+
+      <!-- MINIMIZE -->
+      <button
+        class="finance-calc-mini-btn"
+        onclick="toggleFinanceCalcMini()"
+      >
+        —
+      </button>
+
+      <!-- CLOSE -->
+      <button
+        class="finance-calc-close"
+        onclick="toggleFinanceCalc()"
+      >
+        ✕
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- ==========================
+       CONTENT
+  ========================== -->
+
+  <div id="financeCalcContent">
+
+    <!-- DISPLAY -->
+    <input
+      type="text"
+      id="financeCalcDisplay"
+      class="finance-calc-display"
+      readonly
+    >
+
+    <!-- ==========================
+         BUTTON GRID
+    ========================== -->
+
+    <div class="finance-calc-grid">
+
+      <!-- ROW 1 -->
+      <button
+        class="finance-calc-btn"
+        onclick="financeCalcInput('7')"
+      >
+        7
+      </button>
+
+      <button
+        class="finance-calc-btn"
+        onclick="financeCalcInput('8')"
+      >
+        8
+      </button>
+
+      <button
+        class="finance-calc-btn"
+        onclick="financeCalcInput('9')"
+      >
+        9
+      </button>
+
+      <button
+        class="finance-calc-btn finance-calc-operator"
+        onclick="financeCalcInput('/')"
+      >
+        ÷
+      </button>
+
+      <!-- ROW 2 -->
+      <button
+        class="finance-calc-btn"
+        onclick="financeCalcInput('4')"
+      >
+        4
+      </button>
+
+      <button
+        class="finance-calc-btn"
+        onclick="financeCalcInput('5')"
+      >
+        5
+      </button>
+
+      <button
+        class="finance-calc-btn"
+        onclick="financeCalcInput('6')"
+      >
+        6
+      </button>
+
+      <button
+        class="finance-calc-btn finance-calc-operator"
+        onclick="financeCalcInput('*')"
+      >
+        ×
+      </button>
+
+      <!-- ROW 3 -->
+      <button
+        class="finance-calc-btn"
+        onclick="financeCalcInput('1')"
+      >
+        1
+      </button>
+
+      <button
+        class="finance-calc-btn"
+        onclick="financeCalcInput('2')"
+      >
+        2
+      </button>
+
+      <button
+        class="finance-calc-btn"
+        onclick="financeCalcInput('3')"
+      >
+        3
+      </button>
+
+      <button
+        class="finance-calc-btn finance-calc-operator"
+        onclick="financeCalcInput('-')"
+      >
+        −
+      </button>
+
+      <!-- ROW 4 -->
+      <button
+        class="finance-calc-btn"
+        onclick="financeCalcInput('0')"
+      >
+        0
+      </button>
+
+      <button
+        class="finance-calc-btn"
+        onclick="financeCalcInput('.')"
+      >
+        .
+      </button>
+
+      <!-- BACKSPACE -->
+      <button
+        class="finance-calc-btn finance-calc-backspace"
+        onclick="financeCalcBackspace()"
+      >
+        ⌫
+      </button>
+
+      <button
+        class="finance-calc-btn finance-calc-operator"
+        onclick="financeCalcInput('+')"
+      >
+        +
+      </button>
+
+    </div>
+
+    <!-- BIG EQUAL -->
+    <button
+      class="finance-calc-equal-big"
+      onclick="financeCalculate()"
+    >
+      =
+    </button>
+
+    <!-- ==========================
+         HISTORY
+    ========================== -->
+
+    <div class="finance-calc-history">
+
+      <div class="finance-calc-history-title">
+        History
+      </div>
+
+      <div id="financeCalcHistoryList">
+
+        <p class="finance-calc-empty">
+          Belum ada history
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
 <div class="bottom-nav">
 
   <div class="nav-item active" onclick="setPage('home')">

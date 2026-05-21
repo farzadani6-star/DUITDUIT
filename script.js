@@ -855,7 +855,7 @@ fb.setDoc(
   {
 
     coin:
-      penguinCoin + 50
+      penguinCoin +0
 
   },
 
@@ -2366,10 +2366,11 @@ photoInput.addEventListener("change", async function (e) {
 
     console.log("FINAL SIZE:", Math.round(compressed.length / 1024), "KB");
 
-    await fb.addDoc(fb.collection(db, "gallery"), {
-      url: compressed,
-      date: new Date().toISOString()
-    });
+await fb.addDoc(fb.collection(db, "gallery"), {
+  url: compressed,
+  date: new Date().toISOString(),
+  createdAt: Date.now()
+});
 
     console.log("UPLOAD SUCCESS");
 
@@ -2389,9 +2390,9 @@ let slideIndex = 0;
 let slideInterval;
 
 function renderGallery() {
-  let startX = 0;
-let isTouching = false;
 
+  let startX = 0;
+  let isTouching = false;
 
   const el = document.getElementById("gallery");
   const hero = document.getElementById("heroPhoto");
@@ -2400,12 +2401,17 @@ let isTouching = false;
 
   el.innerHTML = "";
 
-  if (photos.length === 0) {
+  // ==========================
+  // EMPTY STATE
+  // ==========================
+  if (!photos || photos.length === 0) {
+
     hero.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999">
-        fotoo dulss gasii 💙
+      <div class="empty-hero">
+        💕 upload foto duluu sayangg
       </div>
     `;
+
     return;
   }
 
@@ -2413,16 +2419,32 @@ let isTouching = false;
   // HERO SLIDESHOW
   // ==========================
   function showSlide(index) {
-    slideIndex = (index + photos.length) % photos.length;
+
+    slideIndex =
+      (index + photos.length) % photos.length;
 
     hero.innerHTML = `
-      <div class="hero-wrapper">
-        <img src="${photos[slideIndex].url}" class="hero-img slide-anim">
+      <div class="scrap-hero-card">
+
+
+
+        <img
+          src="${photos[slideIndex].url}"
+          class="hero-img slide-anim"
+        >
+
+
+
+        <div class="scrap-star">✨</div>
+
         <div class="dots">
           ${photos.map((_, i) => `
-            <span class="${i === slideIndex ? 'active' : ''}"></span>
+            <span class="${
+              i === slideIndex ? 'active' : ''
+            }"></span>
           `).join("")}
         </div>
+
       </div>
     `;
   }
@@ -2435,8 +2457,12 @@ let isTouching = false;
     showSlide(slideIndex - 1);
   }
 
-  // clear interval biar gak numpuk
-  if (slideInterval) clearInterval(slideInterval);
+  // ==========================
+  // CLEAR INTERVAL
+  // ==========================
+  if (slideInterval) {
+    clearInterval(slideInterval);
+  }
 
   showSlide(slideIndex);
 
@@ -2444,48 +2470,104 @@ let isTouching = false;
   slideInterval = setInterval(nextSlide, 3000);
 
   // ==========================
-  // SWIPE TOUCH
+  // TOUCH SWIPE
   // ==========================
   hero.ontouchstart = (e) => {
     startX = e.touches[0].clientX;
     isTouching = true;
+
     clearInterval(slideInterval);
   };
 
   hero.ontouchend = (e) => {
+
     if (!isTouching) return;
 
-    const endX = e.changedTouches[0].clientX;
+    const endX =
+      e.changedTouches[0].clientX;
+
     const diff = endX - startX;
 
     if (Math.abs(diff) > 50) {
-      diff > 0 ? prevSlide() : nextSlide();
+      diff > 0
+        ? prevSlide()
+        : nextSlide();
     }
 
     isTouching = false;
-    slideInterval = setInterval(nextSlide, 3000);
+
+    slideInterval =
+      setInterval(nextSlide, 3000);
   };
 
   // ==========================
-  // TAP CLICK (kiri / kanan)
+  // CLICK NEXT PREV
   // ==========================
   hero.onclick = (e) => {
-    const rect = hero.getBoundingClientRect();
+
+    const rect =
+      hero.getBoundingClientRect();
+
     const x = e.clientX - rect.left;
 
-    x < rect.width / 2 ? prevSlide() : nextSlide();
+    x < rect.width / 2
+      ? prevSlide()
+      : nextSlide();
   };
 
   // ==========================
-  // GALLERY GRID
+  // SCRAPBOOK GRID
   // ==========================
-  photos.forEach(p => {
+  const doodles =
+    ["💖","✨","🌸","🎀","💕","🫶"];
+
+  photos.forEach((p, i) => {
+
+    const random =
+      doodles[
+        Math.floor(
+          Math.random() * doodles.length
+        )
+      ];
+
     el.innerHTML += `
-      <div class="img-wrap">
-<div class="polaroid" onclick="openPhoto('${p.url}')">
-  <img src="${p.url}">
+      <div class="scrap-item">
+
+        <div class="scrap-tape"></div>
+
+        <div
+          class="scrap-polaroid"
+
+          onclick="openPhoto('${p.url}')"
+        >
+
+          <div class="scrap-doodle">
+            ${random}
+          </div>
+
+          <img src="${p.url}">
+
+<div class="scrap-text">
+  ${
+    p.createdAt
+    ? new Date(p.createdAt).toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      })
+    : "Our Moment 💕"
+  }
 </div>
-        <button class="delete-btn" onclick="deletePhoto('${p.id}')">✕</button>
+
+        </div>
+
+        <button
+          class="delete-btn"
+          onclick="deletePhoto('${p.id}')"
+        >
+          ✕
+        </button>
+
       </div>
     `;
   });
@@ -4098,21 +4180,376 @@ mataKanan.setAttribute(
 
 }
 
-// ==========================
-// UPDATE COIN UI
-// ==========================
-function updateCoinUI(){
+/* =========================================
+   FINANCE CALCULATOR FULL FINAL
+========================================= */
 
-  const coinEl =
+/* =========================
+   STORAGE KEY
+========================= */
 
+const FINANCE_HISTORY_KEY =
+  "financeCalcHistory";
+
+/* =========================
+   HISTORY ARRAY
+========================= */
+
+let financeCalcHistory = [];
+
+/* =========================
+   LOAD HISTORY
+========================= */
+
+function loadFinanceHistory() {
+
+  try {
+
+    const saved =
+      localStorage.getItem(
+        FINANCE_HISTORY_KEY
+      );
+
+    financeCalcHistory =
+      saved
+        ? JSON.parse(saved)
+        : [];
+
+  } catch (err) {
+
+    financeCalcHistory = [];
+  }
+}
+
+/* =========================
+   SAVE HISTORY
+========================= */
+
+function saveFinanceHistory() {
+
+  localStorage.setItem(
+
+    FINANCE_HISTORY_KEY,
+
+    JSON.stringify(
+      financeCalcHistory
+    )
+  );
+}
+
+/* =========================
+   CLEAN HISTORY > 7 HARI
+========================= */
+
+function cleanOldFinanceHistory() {
+
+  const now = Date.now();
+
+  financeCalcHistory =
+    financeCalcHistory.filter(item => {
+
+      if (!item.createdAt)
+        return false;
+
+      const age =
+        now - item.createdAt;
+
+      // 7 hari
+      return age <
+        7 * 24 * 60 * 60 * 1000;
+    });
+
+  saveFinanceHistory();
+}
+
+/* =========================
+   TOGGLE CALCULATOR
+========================= */
+
+window.toggleFinanceCalc =
+function () {
+
+  const box =
     document.getElementById(
-      "coinText"
+      "financeCalcBox"
     );
 
-  if(!coinEl) return;
+  if (!box) return;
 
-  coinEl.textContent =
+  box.classList.toggle(
+    "active"
+  );
+};
 
-    `🪙 ${penguinCoin}`;
+/* =========================
+   INPUT
+========================= */
 
+window.financeCalcInput =
+function (value) {
+
+  const display =
+    document.getElementById(
+      "financeCalcDisplay"
+    );
+
+  if (!display) return;
+
+  // reset kalau error
+  if (
+    display.value === "Error"
+  ) {
+
+    display.value = "";
+  }
+
+  display.value += value;
+};
+
+/* =========================
+   CLEAR
+========================= */
+
+window.financeCalcClear =
+function () {
+
+  const display =
+    document.getElementById(
+      "financeCalcDisplay"
+    );
+
+  if (!display) return;
+
+  display.value = "";
+};
+
+/* =========================
+   BACKSPACE
+========================= */
+
+window.financeCalcBackspace =
+function () {
+
+  const display =
+    document.getElementById(
+      "financeCalcDisplay"
+    );
+
+  if (!display) return;
+
+  display.value =
+    display.value.slice(0, -1);
+};
+
+/* =========================
+   CALCULATE
+========================= */
+
+window.financeCalculate =
+function () {
+
+  const display =
+    document.getElementById(
+      "financeCalcDisplay"
+    );
+
+  if (!display) return;
+
+  try {
+
+    const expression =
+      display.value;
+
+    // kosong jangan hitung
+    if (!expression) return;
+
+    const result =
+      eval(expression);
+
+    // tampilkan hasil
+    display.value = result;
+
+    // simpan history terbaru
+    financeCalcHistory.unshift({
+
+      expression,
+
+      result,
+
+      time:
+        new Date()
+        .toLocaleTimeString(
+          "id-ID",
+          {
+            hour:"2-digit",
+            minute:"2-digit"
+          }
+        ),
+
+      createdAt:
+        Date.now()
+    });
+
+    // max 20 history
+    if (
+      financeCalcHistory.length > 20
+    ) {
+
+      financeCalcHistory.pop();
+    }
+
+    // save
+    saveFinanceHistory();
+
+    // render
+    renderFinanceCalcHistory();
+
+  } catch (err) {
+
+    display.value = "Error";
+  }
+};
+
+/* =========================
+   RENDER HISTORY
+========================= */
+
+function renderFinanceCalcHistory() {
+
+  const list =
+    document.getElementById(
+      "financeCalcHistoryList"
+    );
+
+  if (!list) return;
+
+  // kosong
+  if (
+    financeCalcHistory.length === 0
+  ) {
+
+    list.innerHTML = `
+      <p class="finance-calc-empty">
+        Belum ada history
+      </p>
+    `;
+
+    return;
+  }
+
+  list.innerHTML = "";
+
+  financeCalcHistory.forEach(item => {
+
+    list.innerHTML += `
+
+      <div class="finance-calc-history-item">
+
+        <div class="finance-calc-expression">
+          ${item.expression}
+        </div>
+
+        <div class="finance-calc-result">
+          = ${item.result}
+        </div>
+
+        <div
+          style="
+            font-size:11px;
+            color:#999;
+            margin-top:4px;
+          "
+        >
+          ${item.time}
+        </div>
+
+      </div>
+
+    `;
+  });
 }
+
+/* =========================
+   KEYBOARD SUPPORT
+========================= */
+
+document.addEventListener(
+  "keydown",
+  (e) => {
+
+    const display =
+      document.getElementById(
+        "financeCalcDisplay"
+      );
+
+    if (!display) return;
+
+    // angka/operator
+    if (
+      /[0-9+\-*/.]/.test(e.key)
+    ) {
+
+      display.value += e.key;
+    }
+
+    // ENTER
+    if (e.key === "Enter") {
+
+      financeCalculate();
+    }
+
+    // BACKSPACE
+    if (
+      e.key === "Backspace"
+    ) {
+
+      financeCalcBackspace();
+    }
+
+    // ESC
+    if (
+      e.key === "Escape"
+    ) {
+
+      financeCalcClear();
+    }
+  }
+);
+
+/* =========================
+   INIT
+========================= */
+
+window.addEventListener(
+  "load",
+  () => {
+
+    // load localstorage
+    loadFinanceHistory();
+
+    // hapus yg >7 hari
+    cleanOldFinanceHistory();
+
+    // render history
+    renderFinanceCalcHistory();
+  }
+);
+
+/* =========================
+   MINIMIZE MODE
+========================= */
+
+window.toggleFinanceCalcMini =
+function () {
+
+  const box =
+    document.getElementById(
+      "financeCalcBox"
+    );
+
+  if (!box) return;
+
+  box.classList.toggle(
+    "minimized"
+  );
+};
